@@ -1,0 +1,20 @@
+# Framework Principal
+django==4.2.11
+
+# Conector para o Banco de Dados PostgreSQL
+psycopg2-binary==2.9.9
+
+# Servidor de Aplicação WSGI para Produção
+gunicorn==21.2.0
+
+# Framework para criar a API REST
+djangorestframework==3.15.1
+
+# Para permitir a comunicação entre Frontend e Backend
+django-cors-headers==4.3.1
+
+# Biblioteca para gerar os relatórios em PDF
+reportlab==4.1.0
+
+# Para gerenciar variáveis de ambiente (chaves secretas, etc.)
+python-dotenv==1.0.1
