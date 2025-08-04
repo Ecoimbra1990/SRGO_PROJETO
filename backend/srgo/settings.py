@@ -1,8 +1,11 @@
+# Arquivo: backend/srgo/settings.py
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
-# Carrega as variáveis de ambiente do arquivo .env
+# Carrega as variáveis de ambiente do arquivo .env (para desenvolvimento local)
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -17,7 +20,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ['true', '1', 't']
 # Hosts permitidos
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
-# Aplicações instaladas (a nossa 'ocorrencias' está aqui)
+# Aplicações instaladas
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -63,10 +66,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'srgo.wsgi.application'
 
-# Configuração do Banco de Dados (usando a URL da Render)
-import dj_database_url
+# Configuração do Banco de Dados
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600)
+    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
 }
 
 # Validação de Senha
@@ -83,13 +85,21 @@ TIME_ZONE = 'America/Bahia'
 USE_I18N = True
 USE_TZ = True
 
-# Arquivos Estáticos (CSS, JavaScript, Imagens)
+# Arquivos Estáticos
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Tipo de Campo de Chave Primária Padrão
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Adicionar dj-database-url ao requirements.txt
-# No seu arquivo backend/requirements.txt, adicione esta linha:
-# dj-database-url==0.5.0
+# --- CONFIGURAÇÕES DE SEGURANÇA ADICIONAIS ---
+
+# Lista de origens confiáveis para proteção CSRF (HTTPS)
+# Lê a variável de ambiente, que deve conter a URL completa
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+
+# Configuração do CORS (para o frontend se comunicar com o backend)
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+
+# A Render usa um proxy, então precisamos confiar no cabeçalho que ele envia
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
