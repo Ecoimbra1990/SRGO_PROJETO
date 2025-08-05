@@ -8,14 +8,22 @@ pip install -r requirements.txt
 # Coleta os arquivos estáticos
 python manage.py collectstatic --no-input
 
-# Comando para forçar a limpeza das tabelas da app antes de migrar.
+# --- Bloco de Recuperação da Base de Dados ---
+# 1. Força a limpeza das tabelas da app para evitar o erro "already exists".
+echo "--- Limpando tabelas da app 'ocorrencias' ---"
 python manage.py reset_app_db
 
-# Executa as migrações normalmente
+# 2. Redefine o histórico de migrações da app para o estado zero.
+echo "--- Redefinindo o histórico de migrações ---"
+python manage.py migrate ocorrencias zero --fake
+
+# 3. Executa as migrações normalmente. Agora, o Django irá recriar as tabelas do zero.
+echo "--- Aplicando migrações ---"
 python manage.py migrate
 
-# Cria o superusuário inicial (se não existir)
+# 4. Cria o superusuário (se não existir)
 python manage.py create_initial_superuser
 
-# Inicia o servidor web Gunicorn (ESTA É A LINHA QUE FALTAVA)
+# 5. Inicia o servidor web
+echo "--- Iniciando o servidor Gunicorn ---"
 gunicorn srgo.wsgi
