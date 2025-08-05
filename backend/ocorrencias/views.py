@@ -2,6 +2,7 @@ from rest_framework import viewsets, generics
 from .models import Ocorrencia
 from .serializers import OcorrenciaSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.models import User # <-- IMPORTAÇÃO ADICIONADA
 
 # View para registrar um novo usuário
 class UserCreate(generics.CreateAPIView):
