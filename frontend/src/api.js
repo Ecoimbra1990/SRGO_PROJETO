@@ -1,13 +1,16 @@
 import axios from 'axios';
 
-// Define a URL base da API. Altere se o seu backend estiver em outro endereço.
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+// A URL base da API deve apontar para o endpoint /api.
+// Certifique-se de que a variável de ambiente REACT_APP_API_URL no Render
+// está definida como https://srgo-backend.onrender.com/api
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
 
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: API_BASE_URL,
 });
 
 // Interceptor para adicionar o token de autenticação em todas as requisições
+// que usam a instância 'api'.
 api.interceptors.request.use(async config => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -18,17 +21,23 @@ api.interceptors.request.use(async config => {
     return Promise.reject(error);
 });
 
-// Funções de Autenticação
+// --- Funções de Autenticação ---
+// Usam a instância 'api' para herdar a baseURL correta.
+
 export const loginUser = (credentials) => {
-    return axios.post(`${API_URL}/token/`, credentials);
+    // O caminho é relativo à baseURL, resultando em POST para /api/token/
+    return api.post('/token/', credentials);
 };
 
 export const registerUser = (userData) => {
-    return axios.post(`${API_URL}/register/`, userData);
+    // O caminho é relativo à baseURL, resultando em POST para /api/register/
+    return api.post('/register/', userData);
 };
 
 
-// Funções para Ocorrências
+// --- Funções para Ocorrências ---
+// Já usavam a instância 'api' e continuam a funcionar como esperado.
+
 export const getOcorrencias = () => {
     return api.get('/ocorrencias/');
 };
