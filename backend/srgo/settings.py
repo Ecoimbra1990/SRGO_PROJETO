@@ -113,5 +113,5 @@ JAZZMIN_SETTINGS = {
         "ocorrencias.OrganizacaoCriminosa": "fas fa-shield-alt",
         "ocorrencias.ProcedimentoPenal": "fas fa-gavel",
     },
-    "language_chooser": True,
+    "language_chooser": True
 }
