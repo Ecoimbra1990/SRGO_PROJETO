@@ -27,18 +27,18 @@ function OcorrenciaForm() {
   };
 
   // Função que será chamada quando o formulário for enviado
+  // Dentro do arquivo OcorrenciaForm.js
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage('Enviando ocorrência...');
 
     try {
-      // Usa o 'api.post' para enviar os dados para o backend
-      // Nota: Ainda não criamos a rota /api/ocorrencias/ no backend. Faremos isso a seguir.
-      // const response = await api.post('ocorrencias/', formData);
+      // A linha abaixo agora está ATIVA e irá enviar os dados de verdade!
+      const response = await api.post('ocorrencias/', formData);
 
-      // Por enquanto, vamos simular o sucesso e mostrar os dados no console
-      console.log("Dados a serem enviados:", formData);
-      setMessage('Ocorrência registrada com sucesso! (Simulação)');
+      console.log("Resposta da API:", response.data);
+      setMessage('Ocorrência registrada com sucesso!');
 
       // Limpar o formulário após o sucesso
       setFormData({
@@ -51,7 +51,7 @@ function OcorrenciaForm() {
       });
 
     } catch (error) {
-      console.error("Erro ao registrar ocorrência:", error);
+      console.error("Erro ao registrar ocorrência:", error.response.data);
       setMessage('Falha ao registrar ocorrência. Verifique o console.');
     }
   };
@@ -66,10 +66,10 @@ function OcorrenciaForm() {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="tipo_ocorrencia">Tipo de Ocorrência:</label>
-          <select 
-            id="tipo_ocorrencia" 
+          <select
+            id="tipo_ocorrencia"
             name="tipo_ocorrencia" // Adicionado o atributo 'name'
-            value={formData.tipo_ocorrencia} 
+            value={formData.tipo_ocorrencia}
             onChange={handleChange}
           >
             <option value="Homicidio">Homicídio Doloso (CVLI)</option>
@@ -82,8 +82,8 @@ function OcorrenciaForm() {
 
         <div className="form-group">
           <label htmlFor="data_fato">Data e Hora do Fato:</label>
-          <input 
-            type="datetime-local" 
+          <input
+            type="datetime-local"
             id="data_fato"
             name="data_fato" // Adicionado o atributo 'name'
             value={formData.data_fato}
@@ -94,7 +94,7 @@ function OcorrenciaForm() {
 
         <div className="form-group">
           <label htmlFor="descricao_fato">Descrição do Fato:</label>
-          <textarea 
+          <textarea
             id="descricao_fato"
             name="descricao_fato" // Adicionado o atributo 'name'
             rows="5"
@@ -104,10 +104,10 @@ function OcorrenciaForm() {
           ></textarea>
         </div>
 
-         <div className="form-group">
+        <div className="form-group">
           <label htmlFor="endereco_localizacao">Endereço/Localidade:</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             id="endereco_localizacao"
             name="endereco_localizacao"
             value={formData.endereco_localizacao}
