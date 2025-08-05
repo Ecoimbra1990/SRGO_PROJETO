@@ -1,4 +1,5 @@
 # Arquivo: backend/srgo/settings.py
+# VERSÃO FINAL E CORRIGIDA
 
 import os
 from pathlib import Path
@@ -73,14 +74,13 @@ TIME_ZONE = 'America/Bahia'
 USE_I18N = True
 USE_TZ = True
 
-# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS ATUALIZADA ---
+# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS CORRIGIDA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# Altere esta linha no final do seu ficheiro settings.py
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage" # Removemos 'Manifest'
-
-# Altere esta linha no seu ficheiro settings.py
+# ESTA É A CORREÇÃO PRINCIPAL:
+# Procura por uma pasta chamada 'static' dentro do diretório do backend (BASE_DIR)
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -89,36 +89,21 @@ CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# --- CONFIGURAÇÕES DO TEMA JAZZMIN CORRIGIDAS ---
 JAZZMIN_SETTINGS = {
-    # Título da janela do navegador
     "site_title": "SRGO Admin",
-
-    # Título no cabeçalho (pode ser abreviado)
     "site_header": "SRGO",
-
-    # Texto da marca principal, substitui "Django Administration"
     "site_brand": "SRGO COPPM",
-
-    # Caminho para a sua logo (o Django irá encontrá-la nos ficheiros estáticos)
+    # O caminho para a logo agora está correto em relação à pasta 'static'
     "site_logo": "assets/coppm.png",
-
-    # Mensagem de boas-vindas na tela de login
     "welcome_sign": "Bem-vindo ao SRGO",
-
-    # Texto de copyright no rodapé
     "copyright": "Comando de Operações Policiais Militares",
-
-    # Modelos a serem pesquisados na barra de pesquisa principal
     "search_model": ["auth.User", "ocorrencias.Ocorrencia"],
-
-    # Links do menu superior
     "topmenu_links": [
         {"name": "Início", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"app": "ocorrencias"},
         {"model": "auth.User"},
     ],
-
-    # Ícones para os modelos
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
@@ -128,34 +113,5 @@ JAZZMIN_SETTINGS = {
         "ocorrencias.OrganizacaoCriminosa": "fas fa-shield-alt",
         "ocorrencias.ProcedimentoPenal": "fas fa-gavel",
     },
-
-    # Adiciona um seletor de idiomas no painel
     "language_chooser": True,
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": False,
-    "brand_small_text": False,
-    "brand_colour": "navbar-dark",
-    "accent": "accent-primary",
-    "navbar": "navbar-dark",
-    "no_navbar_border": False,
-    "sidebar": "sidebar-dark-primary",
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": False,
-    "sidebar_nav_compact_style": False,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": False,
-    "theme": "darkly", # Define um tema escuro
-    "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success"
-    }
 }
