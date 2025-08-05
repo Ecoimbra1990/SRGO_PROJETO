@@ -1,12 +1,11 @@
-# Arquivo: backend/srgo/urls.py
+# Arquivo: backend/ocorrencias/urls.py
+# VERSÃO CORRIGIDA
 
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+# Importa APENAS a view que existe atualmente
+from .views import OcorrenciaListCreateView
 
 urlpatterns = [
-    # Esta linha é a que ativa o painel de administração
-    path('admin/', admin.site.urls),
-
-    # Esta linha conecta as URLs da sua aplicação de ocorrências
-    path('api/', include('ocorrencias.urls')),
+    # A URL /api/ocorrencias/ agora aponta corretamente para a única view que temos
+    path('ocorrencias/', OcorrenciaListCreateView.as_view(), name='ocorrencia-list-create'),
 ]
