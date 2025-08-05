@@ -1,11 +1,13 @@
-# Arquivo: backend/ocorrencias/urls.py
-# VERSÃO CORRIGIDA E SINCRONIZADA
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import OcorrenciaViewSet, UserCreate
 
-from django.urls import path
-# Importa APENAS a view que realmente existe
-from .views import OcorrenciaListCreateView
+# Create a router and register our viewsets with it.
+router = DefaultRouter()
+router.register(r'ocorrencias', OcorrenciaViewSet)
 
+# The API URLs are now determined automatically by the router.
 urlpatterns = [
-    # A URL /api/ocorrencias/ agora aponta corretamente para a única view que temos
-    path('ocorrencias/', OcorrenciaListCreateView.as_view(), name='ocorrencia-list-create'),
+    path('', include(router.urls)),
+    path('register/', UserCreate.as_view(), name='user_create'),
 ]

@@ -1,23 +1,21 @@
-# Arquivo: backend/ocorrencias/serializers.py
-# VERSÃO FINAL E CORRIGIDA
-
 from rest_framework import serializers
 from .models import Ocorrencia
+from django.contrib.auth.models import User
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ocorrencia
-        # Lista os campos que serão aceites e enviados pela API
-        fields = [
-            'id', 
-            'tipo_ocorrencia', 
-            'data_fato', 
-            'descricao_fato', 
-            'endereco_localizacao',
-            'fonte_informacao',
-            'caderno_informativo',
-            'data_criacao',
-            'usuario_registro' # <-- LINHA ADICIONADA
-        ]
-        # O 'usuario_registro' é tratado como um campo apenas de leitura
-        read_only_fields = ['id', 'data_criacao', 'usuario_registro'] # <-- CAMPO ADICIONADO
+        fields = '__all__'
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password')
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password']
+        )
+        return user

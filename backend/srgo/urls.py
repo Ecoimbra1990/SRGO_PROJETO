@@ -1,14 +1,30 @@
-# Arquivo: backend/srgo/urls.py
-# VERSÃO CORRETA E FINAL
+"""
+URL configuration for srgo project.
 
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.0/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
-    # Esta linha ativa o painel de administração
     path('admin/', admin.site.urls),
-
-    # Esta linha conecta todas as URLs da sua aplicação de ocorrências ao prefixo /api/
-    # Ela direciona o tráfego para o ficheiro 'ocorrencias/urls.py'
     path('api/', include('ocorrencias.urls')),
+    # Rotas para autenticação JWT
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
