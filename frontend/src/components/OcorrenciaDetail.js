@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getOcorrencia } from '../api';
-import './OcorrenciaDetail.css'; // CSS específico
+import './OcorrenciaDetail.css';
 
 const OcorrenciaDetail = ({ ocorrenciaId }) => {
     const [ocorrencia, setOcorrencia] = useState(null);
@@ -23,13 +23,8 @@ const OcorrenciaDetail = ({ ocorrenciaId }) => {
         }
     }, [ocorrenciaId]);
 
-    if (loading) {
-        return <p>Carregando detalhes...</p>;
-    }
-
-    if (!ocorrencia) {
-        return <p>Selecione uma ocorrência para ver os detalhes.</p>;
-    }
+    if (loading) return <p>Carregando detalhes...</p>;
+    if (!ocorrencia) return <p>Selecione uma ocorrência para ver os detalhes.</p>;
 
     return (
         <div className="detail-container">
@@ -57,15 +52,16 @@ const OcorrenciaDetail = ({ ocorrenciaId }) => {
 
             <div className="detail-card">
                 <h3>Pessoas Envolvidas</h3>
-                {ocorrencia.envolvidos && ocorrencia.envolvidos.length > 0 ? (
+                {ocorrencia.envolvidos?.length > 0 ? (
                     ocorrencia.envolvidos.map((pessoa, index) => (
                         <div key={index} className="pessoa-card">
                             <p><strong>Nome:</strong> {pessoa.nome}</p>
                             <p><strong>Envolvimento:</strong> {pessoa.tipo_envolvimento}</p>
+                            <p><strong>Organização Criminosa:</strong> {pessoa.organizacao_criminosa_nome || 'Nenhuma'}</p>
                             <p><strong>Documento:</strong> {pessoa.documento}</p>
                             <p><strong>Observações:</strong> {pessoa.observacoes}</p>
                             
-                            {pessoa.procedimentos && pessoa.procedimentos.length > 0 && (
+                            {pessoa.procedimentos?.length > 0 && (
                                 <div className="procedimento-section">
                                     <h4>Procedimentos Penais</h4>
                                     {pessoa.procedimentos.map((proc, pIndex) => (

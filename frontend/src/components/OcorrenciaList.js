@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getOcorrencias } from '../api';
-import './OcorrenciaList.css'; // Precisaremos de um CSS específico
+import './OcorrenciaList.css';
 
 const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
     const [ocorrencias, setOcorrencias] = useState([]);
@@ -16,7 +16,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 setError('');
             } catch (err) {
                 console.error("Erro ao buscar ocorrências:", err);
-                setError('Não foi possível carregar as ocorrências. Verifique sua conexão e tente novamente.');
+                setError('Não foi possível carregar as ocorrências.');
             } finally {
                 setLoading(false);
             }
@@ -24,13 +24,8 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
         fetchOcorrencias();
     }, [refresh]);
 
-    if (loading) {
-        return <p>Carregando ocorrências...</p>;
-    }
-
-    if (error) {
-        return <p style={{ color: 'red' }}>{error}</p>;
-    }
+    if (loading) return <p>Carregando ocorrências...</p>;
+    if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
     return (
         <div className="ocorrencia-list-container">
@@ -47,14 +42,14 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 <tbody>
                     {ocorrencias.map(ocorrencia => (
                         <tr key={ocorrencia.id} onClick={() => onSelectOcorrencia(ocorrencia.id)}>
-                            <td>{ocorrencia.tipo_ocorrencia}</td>
+                            <td>{ocorrencia.tipo_ocorrencia_nome}</td>
                             <td>{new Date(ocorrencia.data_fato).toLocaleDateString('pt-BR')}</td>
                             <td>{ocorrencia.bairro || 'N/A'} - {ocorrencia.cidade || 'N/A'}</td>
                             <td>
                                 <button 
                                     className="edit-button"
                                     onClick={(e) => {
-                                        e.stopPropagation(); // Impede que o clique na linha seja acionado
+                                        e.stopPropagation();
                                         onEditOcorrencia(ocorrencia);
                                     }}
                                 >

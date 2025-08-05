@@ -1,20 +1,27 @@
 from rest_framework import viewsets, generics
-from .models import Ocorrencia
-from .serializers import OcorrenciaSerializer, UserSerializer
+from .models import Ocorrencia, OrganizacaoCriminosa, TipoOcorrencia
+from .serializers import OcorrenciaSerializer, UserSerializer, OrganizacaoCriminosaSerializer, TipoOcorrenciaSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
 
-# View para registrar um novo usuário
 class UserCreate(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny] # Permite que qualquer um se registre
+    permission_classes = [AllowAny]
 
-# ViewSet para as Ocorrências
 class OcorrenciaViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows ocorrencias to be viewed or edited.
-    """
-    queryset = Ocorrencia.objects.all().order_by('-data_criacao') # CORREÇÃO APLICADA AQUI
+    queryset = Ocorrencia.objects.all().order_by('-data_criacao')
     serializer_class = OcorrenciaSerializer
-    permission_classes = [IsAuthenticated] # Exige autenticação para acessar
+    permission_classes = [IsAuthenticated]
+    def perform_create(self, serializer):
+        serializer.save(usuario_registro=self.request.user)
+
+class OrganizacaoCriminosaViewSet(viewsets.ModelViewSet):
+    queryset = OrganizacaoCriminosa.objects.all().order_by('nome')
+    serializer_class = OrganizacaoCriminosaSerializer
+    permission_classes = [IsAuthenticated]
+
+class TipoOcorrenciaViewSet(viewsets.ModelViewSet):
+    queryset = TipoOcorrencia.objects.all().order_by('nome')
+    serializer_class = TipoOcorrenciaSerializer
+    permission_classes = [IsAuthenticated]
