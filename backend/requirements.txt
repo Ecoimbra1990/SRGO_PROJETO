@@ -2,7 +2,7 @@
 django==4.2.11
 
 # Conector para o Banco de Dados PostgreSQL
-psycopg2-binary==2.9.9
+ psycopg2
 
 # Servidor de Aplicação WSGI para Produção
 gunicorn==21.2.0
