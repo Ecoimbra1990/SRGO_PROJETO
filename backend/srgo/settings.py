@@ -14,7 +14,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ['true', '1', 't']
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
-    'jazzmin',
+    #'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
