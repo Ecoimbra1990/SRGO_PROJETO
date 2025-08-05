@@ -68,8 +68,8 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # --- NOVA CONFIGURAÇÃO DO WHITENOISE ---
-# Adicione estas duas linhas no final do arquivo
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Altere esta linha no final do seu ficheiro settings.py
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage" # Removemos 'Manifest'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
