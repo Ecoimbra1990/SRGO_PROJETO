@@ -13,6 +13,9 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ['true', '1', 't']
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
+    'jazzmin', # Adicione esta linha no topo
+    'django.contrib.admin',
+    'django.contrib.auth',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -75,3 +78,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# --- CONFIGURAÇÕES DO TEMA JAZZMIN ---
+JAZZMIN_SETTINGS = {
+    # Título da janela do seu site (pode vê-lo na aba do navegador)
+    "site_title": "SRGO Admin",
+
+    # Título no cabeçalho do login e do painel
+    "site_header": "SRGO COPPM",
+
+    # Logo para o painel de administração (usando o ficheiro que você forneceu)
+    "site_logo": "assets/coppm.png", #
+
+    # Texto no rodapé
+    "copyright": "Comando de Operações Policiais Militares",
+
+    # Aparência do menu
+    "topmenu_links": [
+        {"name": "Início", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"model": "auth.User"},
+        {"app": "ocorrencias"},
+    ],
+
+    # Ícones para as suas aplicações
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "ocorrencias.Ocorrencia": "fas fa-file-alt",
+        "ocorrencias.PessoaEnvolvida": "fas fa-user-friends",
+        "ocorrencias.OrganizacaoCriminosa": "fas fa-shield-alt",
+        "ocorrencias.ProcedimentoPenal": "fas fa-gavel",
+    },
+}
