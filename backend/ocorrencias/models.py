@@ -1,72 +1,65 @@
-# Importa os módulos necessários do Django
 from django.db import models
 from django.contrib.auth.models import User
 
-# Modelo para as Organizações Criminosas
-class OrganizacaoCriminosa(models.Model):
-    nome_organizacao = models.CharField(max_length=255, unique=True)
-    status = models.CharField(max_length=10, default='Ativo')
-
-    def __str__(self):
-        return self.nome_organizacao
-
-# Modelo principal para cada Ocorrência
 class Ocorrencia(models.Model):
-    TIPO_CHOICES = [
-        ('Homicidio', 'Homicídio Doloso (CVLI)'),
-        ('Resistencia', 'Auto de Resistência'),
-        ('Refem', 'Crise com Refém'),
-        ('Banco', 'Assalto a Banco'),
-        ('Produtividade', 'Ação de Produtividade'),
-        ('Social', 'Assunto Social'),
-        ('Suplemento', 'Suplemento'),
-    ]
-    
-    tipo_ocorrencia = models.CharField(max_length=50, choices=TIPO_CHOICES)
+    # Campos existentes
+    tipo_ocorrencia = models.CharField(max_length=100)
     data_fato = models.DateTimeField()
     descricao_fato = models.TextField()
-    evolucao_ocorrencia = models.TextField(blank=True, null=True)
-    endereco_localizacao = models.CharField(max_length=255, blank=True, null=True)
-    regiao = models.CharField(max_length=50, blank=True, null=True)
-    fonte_informacao = models.CharField(max_length=255, blank=True, null=True)
+    fonte_informacao = models.CharField(max_length=200)
+    pessoas_envolvidas = models.TextField(blank=True, null=True) # Manteremos por enquanto, mas o novo modelo é o principal
     caderno_informativo = models.CharField(max_length=50)
-    usuario_registro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    evolucao_ocorrencia = models.TextField()
+    usuario_registro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
+    
+    # Novos campos de endereço
+    cep = models.CharField(max_length=9, blank=True, null=True)
+    logradouro = models.CharField(max_length=255, blank=True, null=True)
+    bairro = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, blank=True, null=True)
+    uf = models.CharField(max_length=2, blank=True, null=True)
+    latitude = models.CharField(max_length=20, blank=True, null=True)
+    longitude = models.CharField(max_length=20, blank=True, null=True)
+
+    # Campo antigo de endereço (pode ser removido após migração dos dados)
+    endereco_localizacao = models.CharField(max_length=255)
+    regiao = models.CharField(max_length=100) # Pode ser depreciado em favor de bairro/cidade
 
     def __str__(self):
-        return f"{self.get_tipo_ocorrencia_display()} - {self.data_fato.strftime('%d/%m/%Y')}"
+        return f"{self.tipo_ocorrencia} - {self.data_fato.strftime('%d/%m/%Y')}"
 
-# Modelo para cada Pessoa envolvida em uma Ocorrência
 class PessoaEnvolvida(models.Model):
     TIPO_ENVOLVIMENTO_CHOICES = [
-        ('Vitima', 'Vítima (CVLI)'),
-        ('Resistente', 'Resistente (Óbito)'),
-        ('Autor', 'Autor/Envolvido'),
-        ('Refem', 'Refém'),
-        ('Testemunha', 'Testemunha'),
+        ('VITIMA', 'Vítima'),
+        ('TESTEMUNHA', 'Testemunha'),
+        ('SUSPEITO', 'Suspeito'),
+        ('AUTOR', 'Autor'),
+        ('OUTRO', 'Outro'),
     ]
-    
-    ocorrencia = models.ForeignKey(Ocorrencia, related_name='pessoas_envolvidas', on_delete=models.CASCADE)
-    nome_completo = models.CharField(max_length=255)
-    vulgo = models.CharField(max_length=100, blank=True, null=True)
-    data_nascimento = models.DateField(blank=True, null=True)
-    filiacao = models.CharField(max_length=255, blank=True, null=True)
-    documento_cpf = models.CharField(max_length=11, blank=True, null=True)
-    tipo_envolvimento = models.CharField(max_length=50, choices=TIPO_ENVOLVIMENTO_CHOICES)
-    situacao_lesao = models.CharField(max_length=50, blank=True, null=True)
-    antecedentes_resumo = models.TextField(blank=True, null=True)
-    caminho_foto = models.CharField(max_length=255, blank=True, null=True)
-    orcrim = models.ForeignKey(OrganizacaoCriminosa, on_delete=models.SET_NULL, null=True, blank=True)
+
+    ocorrencia = models.ForeignKey(Ocorrencia, related_name='envolvidos', on_delete=models.CASCADE)
+    nome = models.CharField(max_length=255)
+    documento = models.CharField(max_length=50, blank=True, null=True)
+    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVIMENTO_CHOICES)
+    observacoes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.nome_completo
+        return f"{self.nome} ({self.get_tipo_envolvimento_display()})"
 
-# Modelo para os Procedimentos Penais de uma Pessoa
 class ProcedimentoPenal(models.Model):
-    pessoa = models.ForeignKey(PessoaEnvolvida, related_name='procedimentos', on_delete=models.CASCADE)
-    numero_procedimento = models.CharField(max_length=100)
-    natureza_procedimento = models.CharField(max_length=100, blank=True, null=True)
-    unidade_origem = models.CharField(max_length=255, blank=True, null=True)
+    STATUS_CHOICES = [
+        ('EM_INVESTIGACAO', 'Em Investigação'),
+        ('EM_ANDAMENTO', 'Em Andamento'),
+        ('CONCLUIDO', 'Concluído'),
+        ('ARQUIVADO', 'Arquivado'),
+    ]
+
+    pessoa_envolvida = models.ForeignKey(PessoaEnvolvida, related_name='procedimentos', on_delete=models.CASCADE)
+    numero_processo = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    vara_tribunal = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_INVESTIGACAO')
+    detalhes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.numero_procedimento
+        return f"Processo {self.numero_processo} ({self.get_status_display()})"
