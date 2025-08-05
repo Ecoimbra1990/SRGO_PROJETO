@@ -13,7 +13,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ['true', '1', 't']
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
-    'jazzmin', # Adicione esta linha no topo
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -25,10 +25,9 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
-# --- ATUALIZAÇÃO DO MIDDLEWARE ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Adicione esta linha
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,42 +61,63 @@ DATABASES = {
     'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
 }
 
-# ... (o resto da configuração de validação de senha e internacionalização permanece o mesmo) ...
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
 
+LANGUAGE_CODE = 'pt-br'
+TIME_ZONE = 'America/Bahia'
+USE_I18N = True
+USE_TZ = True
+
+# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS ATUALIZADA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# --- NOVA CONFIGURAÇÃO DO WHITENOISE ---
-# Altere esta linha no final do seu ficheiro settings.py
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage" # Removemos 'Manifest'
+# ADICIONE ESTA LINHA: informa ao Django onde procurar por ficheiros estáticos globais (como a sua logo)
+STATICFILES_DIRS = [os.path.join(BASE_DIR.parent, 'assets')]
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# --- CONFIGURAÇÕES DO TEMA JAZZMIN ---
+
 JAZZMIN_SETTINGS = {
-    # Título da janela do seu site (pode vê-lo na aba do navegador)
+    # Título da janela do navegador
     "site_title": "SRGO Admin",
 
-    # Título no cabeçalho do login e do painel
-    "site_header": "SRGO COPPM",
+    # Título no cabeçalho (pode ser abreviado)
+    "site_header": "SRGO",
 
-    # Logo para o painel de administração (usando o ficheiro que você forneceu)
-    "site_logo": "assets/coppm.png", #
+    # Texto da marca principal, substitui "Django Administration"
+    "site_brand": "SRGO COPPM",
 
-    # Texto no rodapé
+    # Caminho para a sua logo (o Django irá encontrá-la nos ficheiros estáticos)
+    "site_logo": "coppm.png", #
+
+    # Mensagem de boas-vindas na tela de login
+    "welcome_sign": "Bem-vindo ao SRGO",
+
+    # Texto de copyright no rodapé
     "copyright": "Comando de Operações Policiais Militares",
 
-    # Aparência do menu
+    # Modelos a serem pesquisados na barra de pesquisa principal
+    "search_model": ["auth.User", "ocorrencias.Ocorrencia"],
+
+    # Links do menu superior
     "topmenu_links": [
         {"name": "Início", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"model": "auth.User"},
         {"app": "ocorrencias"},
+        {"model": "auth.User"},
     ],
 
-    # Ícones para as suas aplicações
+    # Ícones para os modelos
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
@@ -107,4 +127,34 @@ JAZZMIN_SETTINGS = {
         "ocorrencias.OrganizacaoCriminosa": "fas fa-shield-alt",
         "ocorrencias.ProcedimentoPenal": "fas fa-gavel",
     },
+
+    # Adiciona um seletor de idiomas no painel
+    "language_chooser": True,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark",
+    "no_navbar_border": False,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "darkly", # Define um tema escuro
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
 }

@@ -2,9 +2,23 @@
   text-align: center;
 }
 .App-header {
-  background-color: #282c34;
-  padding: 20px;
-  color: white;
+background-color: white; /* Adicionado fundo branco /
+padding: 20px;
+color: #282c34; / Mantenha ou ajuste a cor do texto se necessário /
+display: flex; / Para alinhar o logo e o título /
+flex-direction: row; / Alinhar horizontalmente /
+align-items: center; / Alinhar verticalmente ao centro /
+justify-content: flex-start; / Alinhar logo à esquerda e texto a seguir */
+}
+.App-logo {
+height: 50px; /* Reduzindo a altura do logo /
+margin-right: 20px; / Adicionando espaço entre o logo e o título */
+pointer-events: none;
+}
+
+h1 {
+margin: 0; /* Removendo margens padrão do h1 para melhor alinhamento /
+font-size: 1.8em; / Ajustando o tamanho da fonte do título se necessário */
 }
 main {
   padding: 20px;
