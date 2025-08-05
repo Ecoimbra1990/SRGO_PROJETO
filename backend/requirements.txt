@@ -21,4 +21,13 @@ python-dotenv==1.0.1
 
 dj-database-url==0.5.0
 whitenoise==6.6.0
-django-jazzmin==2.6.0
+# Framework Principal
+django==4.2.11
+
+# ... (outras dependências permanecem iguais)
+dj-database-url==0.5.0
+whitenoise==6.6.0
+
+# REMOVA a linha do jazzmin e ADICIONE estas duas:
+django-admin-interface==0.26.1
+django-colorfield==0.9.0
