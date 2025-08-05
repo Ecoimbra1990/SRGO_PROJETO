@@ -1,7 +1,7 @@
 // Arquivo: frontend/src/components/OcorrenciaForm.js
 
 import React, { useState } from 'react';
-import api from '../api'; // Importa nossa configuração da API
+import api from '../../src/api'; // Importa nossa configuração da API
 
 function OcorrenciaForm() {
   // Estado para armazenar todos os dados do formulário

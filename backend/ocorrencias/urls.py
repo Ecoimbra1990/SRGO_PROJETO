@@ -1,10 +1,9 @@
 # Arquivo: backend/ocorrencias/urls.py
 
 from django.urls import path
-from .views import OcorrenciaCreateView
+from .views import OcorrenciaListCreateView
 
 urlpatterns = [
-    # Quando uma requisição POST for feita para /api/ocorrencias/, 
-    # ela será gerenciada pela OcorrenciaCreateView
-    path('ocorrencias/', OcorrenciaCreateView.as_view(), name='ocorrencia-create'),
+    # A URL /api/ocorrencias/ agora aceita tanto GET para listar como POST para criar.
+    path('ocorrencias/', OcorrenciaListCreateView.as_view(), name='ocorrencia-list-create'),
 ]

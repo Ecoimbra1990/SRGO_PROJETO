@@ -1,7 +1,7 @@
 // Arquivo: frontend/src/components/OcorrenciaList.js
 
 import React, { useState, useEffect } from 'react';
-import api from '../api'; // Importa a nossa configuração do axios
+import api from '../../src/api'; // Importa a nossa configuração do axios
 
 function OcorrenciaList() {
   // Estado para armazenar a lista de ocorrências

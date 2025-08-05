@@ -1,8 +1,8 @@
 // Arquivo: frontend/src/App.js
 
 import React from 'react';
-import OcorrenciaForm from './components/OcorrenciaForm';
-import OcorrenciaList from './components/OcorrenciaList'; // Importa o novo componente
+import OcorrenciaForm from '../public/components/OcorrenciaForm';
+import OcorrenciaList from '../public/components/OcorrenciaList'; // Importa o novo componente
 import './App.css';
 
 function App() {

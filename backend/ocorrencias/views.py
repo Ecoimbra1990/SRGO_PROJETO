@@ -3,20 +3,22 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from .models import Ocorrencia
 from .serializers import OcorrenciaSerializer
 
-# Esta View será responsável por criar novas ocorrências
-class OcorrenciaCreateView(APIView):
+# View unificada para Listar (GET) e Criar (POST) Ocorrências
+class OcorrenciaListCreateView(APIView):
+
+    def get(self, request, format=None):
+        """ Devolve a lista de todas as ocorrências. """
+        ocorrencias = Ocorrencia.objects.all().order_by('-data_fato')
+        serializer = OcorrenciaSerializer(ocorrencias, many=True)
+        return Response(serializer.data)
+
     def post(self, request, format=None):
-        # Passa os dados recebidos do frontend para o nosso serializer
+        """ Cria uma nova ocorrência. """
         serializer = OcorrenciaSerializer(data=request.data)
-
-        # Verifica se os dados são válidos
         if serializer.is_valid():
-            # Salva o novo objeto Ocorrencia no banco de dados
             serializer.save()
-            # Retorna uma resposta de sucesso
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        # Se os dados não forem válidos, retorna os erros
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
