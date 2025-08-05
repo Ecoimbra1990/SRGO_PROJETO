@@ -8,9 +8,12 @@ pip install -r requirements.txt
 # Coleta os arquivos estáticos
 python manage.py collectstatic --no-input
 
-# Executa as migrações. A flag '--fake-initial' resolve o erro de
-# "tabela já existe" ao fazer o deploy pela primeira vez ou após um reset.
-python manage.py migrate --fake-initial
+# (NOVO) Comando para forçar a limpeza das tabelas da app antes de migrar.
+# Isto resolve o erro "relation ... already exists" de forma definitiva.
+python manage.py reset_app_db
+
+# Executa as migrações normalmente
+python manage.py migrate
 
 # Cria o superusuário inicial (se não existir)
 python manage.py create_initial_superuser
