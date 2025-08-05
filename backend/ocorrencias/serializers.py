@@ -1,5 +1,5 @@
 # Arquivo: backend/ocorrencias/serializers.py
-# VERSÃO CORRIGIDA
+# VERSÃO FINAL E CORRIGIDA
 
 from rest_framework import serializers
 from .models import Ocorrencia
@@ -17,7 +17,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             'fonte_informacao',
             'caderno_informativo',
             'data_criacao',
-            'usuario_registro' # <-- ADICIONADO
+            'usuario_registro' # <-- LINHA ADICIONADA
         ]
-        # O campo 'id', 'data_criacao' e 'usuario_registro' serão apenas para leitura
-        read_only_fields = ['id', 'data_criacao', 'usuario_registro'] # <-- ADICIONADO
+        # O 'usuario_registro' é tratado como um campo apenas de leitura
+        read_only_fields = ['id', 'data_criacao', 'usuario_registro'] # <-- CAMPO ADICIONADO

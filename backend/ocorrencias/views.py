@@ -1,14 +1,17 @@
 # Arquivo: backend/ocorrencias/views.py
-# VERSÃO CORRIGIDA
+# VERSÃO FINAL E CORRIGIDA
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny # <-- ADICIONE ESTA IMPORTAÇÃO
 from .models import Ocorrencia
 from .serializers import OcorrenciaSerializer
 
 # View unificada para Listar (GET) e Criar (POST) Ocorrências
 class OcorrenciaListCreateView(APIView):
+    # ADICIONE ESTA LINHA: permite que qualquer pessoa (incluindo o seu frontend) aceda a esta view
+    permission_classes = [AllowAny]
 
     def get(self, request, format=None):
         """ Devolve a lista de todas as ocorrências. """
@@ -20,16 +23,11 @@ class OcorrenciaListCreateView(APIView):
         """ Cria uma nova ocorrência. """
         serializer = OcorrenciaSerializer(data=request.data)
         if serializer.is_valid():
-            # --- INÍCIO DA CORREÇÃO ---
-            # Verifica se o utilizador que fez o pedido está autenticado
+            # A lógica para associar o utilizador (se logado) permanece
             if request.user.is_authenticated:
-                # Se estiver, salva a ocorrência associando o utilizador
                 serializer.save(usuario_registro=request.user)
             else:
-                # Se não estiver (utilizador anónimo), salva sem associar um utilizador
-                # O campo na base de dados ficará nulo, o que é permitido
                 serializer.save()
-            # --- FIM DA CORREÇÃO ---
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
