@@ -16,8 +16,6 @@ INSTALLED_APPS = [
     'jazzmin', # Adicione esta linha no topo
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.admin',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
