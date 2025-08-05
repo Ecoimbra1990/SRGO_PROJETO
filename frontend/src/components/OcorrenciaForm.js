@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import api from '../api';
 
 function OcorrenciaForm({ onOcorrenciaSalva }) { // Recebe a função como propriedade
+  // ... (o seu código useState e handleChange permanecem iguais)
   const [formData, setFormData] = useState({
     tipo_ocorrencia: 'Homicidio',
     data_fato: '',
@@ -40,13 +41,12 @@ function OcorrenciaForm({ onOcorrenciaSalva }) { // Recebe a função como propr
   };
 
   return (
+    // O seu JSX do formulário permanece igual
     <div className="form-container">
       <h2>Registar Nova Ocorrência</h2>
       {message && <p className="status-message">{message}</p>}
       <form onSubmit={handleSubmit}>
-        {/* O resto do seu JSX do formulário continua aqui */}
-        {/* ... */}
-         <div className="form-group">
+        <div className="form-group">
           <label htmlFor="tipo_ocorrencia">Tipo de Ocorrência:</label>
           <select id="tipo_ocorrencia" name="tipo_ocorrencia" value={formData.tipo_ocorrencia} onChange={handleChange} >
             <option value="Homicidio">Homicídio Doloso (CVLI)</option>
