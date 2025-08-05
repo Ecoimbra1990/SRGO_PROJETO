@@ -1,64 +1,91 @@
-// Arquivo: frontend/src/components/OcorrenciaDetail.js
-
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import { getOcorrencia } from '../api';
+import './OcorrenciaDetail.css'; // CSS específico
 
-// O componente recebe o ID da ocorrência como uma propriedade (prop)
-function OcorrenciaDetail({ ocorrenciaId, onVoltarClick }) {
-  const [ocorrencia, setOcorrencia] = useState(null);
-  const [loading, setLoading] = useState(true);
+const OcorrenciaDetail = ({ ocorrenciaId }) => {
+    const [ocorrencia, setOcorrencia] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOcorrencia = async () => {
-      try {
-        // Usa a nova rota da API para buscar os detalhes da ocorrência específica
-        const response = await api.get(`ocorrencias/${ocorrenciaId}/`);
-        setOcorrencia(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Erro ao buscar detalhes da ocorrência:", error);
-        setLoading(false);
-      }
-    };
+    useEffect(() => {
+        const fetchOcorrencia = async () => {
+            try {
+                setLoading(true);
+                const response = await getOcorrencia(ocorrenciaId);
+                setOcorrencia(response.data);
+            } catch (error) {
+                console.error("Erro ao buscar detalhes da ocorrência:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (ocorrenciaId) {
+            fetchOcorrencia();
+        }
+    }, [ocorrenciaId]);
 
-    fetchOcorrencia();
-  }, [ocorrenciaId]); // Roda o efeito sempre que o ID da ocorrência mudar
+    if (loading) {
+        return <p>Carregando detalhes...</p>;
+    }
 
-  if (loading) {
-    return <p>A carregar detalhes da ocorrência...</p>;
-  }
+    if (!ocorrencia) {
+        return <p>Selecione uma ocorrência para ver os detalhes.</p>;
+    }
 
-  if (!ocorrencia) {
-    return <p>Ocorrência não encontrada.</p>;
-  }
+    return (
+        <div className="detail-container">
+            <h2>Detalhes da Ocorrência</h2>
 
-  return (
-    <div className="detail-container">
-      {/* Botão para voltar à lista principal */}
-      <button onClick={onVoltarClick} className="back-btn">← Voltar para a lista</button>
+            <div className="detail-card">
+                <h3>Informações Gerais</h3>
+                <p><strong>Tipo:</strong> {ocorrencia.tipo_ocorrencia}</p>
+                <p><strong>Data do Fato:</strong> {new Date(ocorrencia.data_fato).toLocaleString('pt-BR')}</p>
+                <p><strong>Descrição:</strong> {ocorrencia.descricao_fato}</p>
+                <p><strong>Evolução:</strong> {ocorrencia.evolucao_ocorrencia}</p>
+                <p><strong>Fonte:</strong> {ocorrencia.fonte_informacao}</p>
+                <p><strong>Caderno:</strong> {ocorrencia.caderno_informativo}</p>
+                <p><strong>Registrado por:</strong> {ocorrencia.usuario_registro_username}</p>
+            </div>
 
-      <h2>Detalhes da Ocorrência: {ocorrencia.tipo_ocorrencia.replace(/([A-Z])/g, ' $1').trim()}</h2>
-      <p><strong>Data do Fato:</strong> {new Date(ocorrencia.data_fato).toLocaleString('pt-BR')}</p>
-      <p><strong>Descrição:</strong> {ocorrencia.descricao_fato}</p>
-      <p><strong>Localidade:</strong> {ocorrencia.endereco_localizacao}</p>
+            <div className="detail-card">
+                <h3>Localização</h3>
+                <p><strong>CEP:</strong> {ocorrencia.cep}</p>
+                <p><strong>Logradouro:</strong> {ocorrencia.logradouro}</p>
+                <p><strong>Bairro:</strong> {ocorrencia.bairro}</p>
+                <p><strong>Cidade/UF:</strong> {ocorrencia.cidade}/{ocorrencia.uf}</p>
+                <p><strong>Coordenadas:</strong> Lat: {ocorrencia.latitude}, Lon: {ocorrencia.longitude}</p>
+            </div>
 
-      <hr className="divider" />
-
-      <h3>Pessoas Envolvidas</h3>
-      {ocorrencia.pessoas_envolvidas.length === 0 ? (
-        <p>Nenhuma pessoa envolvida registada para esta ocorrência.</p>
-      ) : (
-        <ul>
-          {ocorrencia.pessoas_envolvidas.map(pessoa => (
-            <li key={pessoa.id}>
-              <strong>{pessoa.nome_completo}</strong> - {pessoa.tipo_envolvimento}
-            </li>
-          ))}
-        </ul>
-      )}
-      {/* Futuramente, aqui virá o formulário para adicionar novas pessoas */}
-    </div>
-  );
-}
+            <div className="detail-card">
+                <h3>Pessoas Envolvidas</h3>
+                {ocorrencia.envolvidos && ocorrencia.envolvidos.length > 0 ? (
+                    ocorrencia.envolvidos.map((pessoa, index) => (
+                        <div key={index} className="pessoa-card">
+                            <p><strong>Nome:</strong> {pessoa.nome}</p>
+                            <p><strong>Envolvimento:</strong> {pessoa.tipo_envolvimento}</p>
+                            <p><strong>Documento:</strong> {pessoa.documento}</p>
+                            <p><strong>Observações:</strong> {pessoa.observacoes}</p>
+                            
+                            {pessoa.procedimentos && pessoa.procedimentos.length > 0 && (
+                                <div className="procedimento-section">
+                                    <h4>Procedimentos Penais</h4>
+                                    {pessoa.procedimentos.map((proc, pIndex) => (
+                                        <div key={pIndex} className="procedimento-card">
+                                            <p><strong>Nº Processo:</strong> {proc.numero_processo}</p>
+                                            <p><strong>Vara/Tribunal:</strong> {proc.vara_tribunal}</p>
+                                            <p><strong>Status:</strong> {proc.status}</p>
+                                            <p><strong>Detalhes:</strong> {proc.detalhes}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <p>Nenhuma pessoa envolvida registrada.</p>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default OcorrenciaDetail;
