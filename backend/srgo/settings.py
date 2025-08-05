@@ -74,13 +74,10 @@ TIME_ZONE = 'America/Bahia'
 USE_I18N = True
 USE_TZ = True
 
-# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS CORRIGIDA ---
+# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
-# ESTA É A CORREÇÃO PRINCIPAL:
-# Procura por uma pasta chamada 'static' dentro do diretório do backend (BASE_DIR)
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -89,12 +86,11 @@ CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# --- CONFIGURAÇÕES DO TEMA JAZZMIN CORRIGIDAS ---
+# --- CONFIGURAÇÕES DO TEMA JAZZMIN (SIMPLIFICADO E CORRIGIDO) ---
 JAZZMIN_SETTINGS = {
     "site_title": "SRGO Admin",
     "site_header": "SRGO",
     "site_brand": "SRGO COPPM",
-    # O caminho para a logo agora está correto em relação à pasta 'static'
     "site_logo": "assets/coppm.png",
     "welcome_sign": "Bem-vindo ao SRGO",
     "copyright": "Comando de Operações Policiais Militares",
@@ -113,5 +109,5 @@ JAZZMIN_SETTINGS = {
         "ocorrencias.OrganizacaoCriminosa": "fas fa-shield-alt",
         "ocorrencias.ProcedimentoPenal": "fas fa-gavel",
     },
-    "language_chooser": True
+    "language_chooser": True,
 }
