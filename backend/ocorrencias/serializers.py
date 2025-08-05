@@ -1,26 +1,10 @@
 # Arquivo: backend/ocorrencias/serializers.py
+# VERSÃO CORRIGIDA
 
 from rest_framework import serializers
-# Importe todos os modelos necessários
-from .models import Ocorrencia, PessoaEnvolvida, ProcedimentoPenal, OrganizacaoCriminosa
-
-class ProcedimentoPenalSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProcedimentoPenal
-        fields = '__all__'
-
-class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
-    # Aninha os procedimentos penais dentro da pessoa envolvida
-    procedimentos = ProcedimentoPenalSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = PessoaEnvolvida
-        fields = '__all__'
+from .models import Ocorrencia
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    # Aninha a lista de pessoas envolvidas dentro da ocorrência
-    pessoas_envolvidas = PessoaEnvolvidaSerializer(many=True, read_only=True)
-
     class Meta:
         model = Ocorrencia
         # Lista os campos que serão aceites e enviados pela API
@@ -33,6 +17,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             'fonte_informacao',
             'caderno_informativo',
             'data_criacao',
-            'pessoas_envolvidas' # Adiciona o novo campo
+            'usuario_registro' # <-- ADICIONADO
         ]
-        read_only_fields = ['id', 'data_criacao']
+        # O campo 'id', 'data_criacao' e 'usuario_registro' serão apenas para leitura
+        read_only_fields = ['id', 'data_criacao', 'usuario_registro'] # <-- ADICIONADO
