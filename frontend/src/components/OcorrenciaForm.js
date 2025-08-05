@@ -1,32 +1,76 @@
-// Importa os módulos necessários do React
-import React, { useState } from 'react';
+// Arquivo: frontend/src/components/OcorrenciaForm.js
 
-// Este é um componente de formulário para registrar uma nova ocorrência
+import React, { useState } from 'react';
+import api from '../api'; // Importa nossa configuração da API
+
 function OcorrenciaForm() {
-  // Estados para armazenar os valores dos campos do formulário
-  const [tipoOcorrencia, setTipoOcorrencia] = useState('Homicidio');
-  const [dataFato, setDataFato] = useState('');
-  const [descricao, setDescricao] = useState('');
-  
+  // Estado para armazenar todos os dados do formulário
+  const [formData, setFormData] = useState({
+    tipo_ocorrencia: 'Homicidio',
+    data_fato: '',
+    descricao_fato: '',
+    endereco_localizacao: '',
+    fonte_informacao: 'PMBA',
+    caderno_informativo: 'Seguranca Publica'
+  });
+
+  // Estado para mensagens de sucesso ou erro
+  const [message, setMessage] = useState('');
+
+  // Função para atualizar o estado quando um campo do formulário muda
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
   // Função que será chamada quando o formulário for enviado
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const formData = { tipoOcorrencia, dataFato, descricao };
-    console.log("Enviando dados para a API:", formData);
-    // Aqui viria a lógica para enviar os dados para a API do backend
+    setMessage('Enviando ocorrência...');
+
+    try {
+      // Usa o 'api.post' para enviar os dados para o backend
+      // Nota: Ainda não criamos a rota /api/ocorrencias/ no backend. Faremos isso a seguir.
+      // const response = await api.post('ocorrencias/', formData);
+
+      // Por enquanto, vamos simular o sucesso e mostrar os dados no console
+      console.log("Dados a serem enviados:", formData);
+      setMessage('Ocorrência registrada com sucesso! (Simulação)');
+
+      // Limpar o formulário após o sucesso
+      setFormData({
+        tipo_ocorrencia: 'Homicidio',
+        data_fato: '',
+        descricao_fato: '',
+        endereco_localizacao: '',
+        fonte_informacao: 'PMBA',
+        caderno_informativo: 'Seguranca Publica'
+      });
+
+    } catch (error) {
+      console.error("Erro ao registrar ocorrência:", error);
+      setMessage('Falha ao registrar ocorrência. Verifique o console.');
+    }
   };
 
   return (
     <div className="form-container">
       <h2>Registrar Nova Ocorrência</h2>
+
+      {/* Exibe a mensagem de status */}
+      {message && <p className="status-message">{message}</p>}
+
       <form onSubmit={handleSubmit}>
-        
         <div className="form-group">
           <label htmlFor="tipo_ocorrencia">Tipo de Ocorrência:</label>
           <select 
             id="tipo_ocorrencia" 
-            value={tipoOcorrencia} 
-            onChange={(e) => setTipoOcorrencia(e.target.value)}
+            name="tipo_ocorrencia" // Adicionado o atributo 'name'
+            value={formData.tipo_ocorrencia} 
+            onChange={handleChange}
           >
             <option value="Homicidio">Homicídio Doloso (CVLI)</option>
             <option value="Resistencia">Auto de Resistência</option>
@@ -41,23 +85,36 @@ function OcorrenciaForm() {
           <input 
             type="datetime-local" 
             id="data_fato"
-            value={dataFato}
-            onChange={(e) => setDataFato(e.target.value)}
+            name="data_fato" // Adicionado o atributo 'name'
+            value={formData.data_fato}
+            onChange={handleChange}
+            required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="descricao">Descrição do Fato:</label>
+          <label htmlFor="descricao_fato">Descrição do Fato:</label>
           <textarea 
-            id="descricao"
+            id="descricao_fato"
+            name="descricao_fato" // Adicionado o atributo 'name'
             rows="5"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
+            value={formData.descricao_fato}
+            onChange={handleChange}
+            required
           ></textarea>
         </div>
-        
-        {/* Aqui seriam adicionadas as seções para adicionar Pessoas Envolvidas, etc. */}
-        
+
+         <div className="form-group">
+          <label htmlFor="endereco_localizacao">Endereço/Localidade:</label>
+          <input 
+            type="text" 
+            id="endereco_localizacao"
+            name="endereco_localizacao"
+            value={formData.endereco_localizacao}
+            onChange={handleChange}
+          />
+        </div>
+
         <button type="submit" className="submit-btn">Salvar Ocorrência</button>
       </form>
     </div>
