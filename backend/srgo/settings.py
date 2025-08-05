@@ -14,7 +14,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ['true', '1', 't']
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
-    #'jazzmin',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -86,20 +86,25 @@ CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# --- CONFIGURAÇÕES DO TEMA JAZZMIN (SIMPLIFICADO E CORRIGIDO) ---
+# No seu ficheiro settings.py, substitua o JAZZMIN_SETTINGS por este:
+
 JAZZMIN_SETTINGS = {
+    # Título da janela do navegador
     "site_title": "SRGO Admin",
-    "site_header": "SRGO",
-    "site_brand": "SRGO COPPM",
+
+    # Título no cabeçalho
+    "site_header": "SRGO COPPM",
+
+    # Texto da marca principal
+    "site_brand": "SRGO",
+
+    # Caminho para a sua logo
     "site_logo": "assets/coppm.png",
+
+    # Mensagem de boas-vindas na tela de login
     "welcome_sign": "Bem-vindo ao SRGO",
-    "copyright": "Comando de Operações Policiais Militares",
-    "search_model": ["auth.User", "ocorrencias.Ocorrencia"],
-    "topmenu_links": [
-        {"name": "Início", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"app": "ocorrencias"},
-        {"model": "auth.User"},
-    ],
+
+    # Ícones para os modelos (isto é seguro)
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
@@ -109,5 +114,7 @@ JAZZMIN_SETTINGS = {
         "ocorrencias.OrganizacaoCriminosa": "fas fa-shield-alt",
         "ocorrencias.ProcedimentoPenal": "fas fa-gavel",
     },
+
+    # Adiciona o seletor de idiomas
     "language_chooser": True,
 }
