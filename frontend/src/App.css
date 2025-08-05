@@ -77,3 +77,30 @@ main {
   color: #0c5460;
   border: 1px solid #bde5f8;
 }
+/* Conteúdo para adicionar em frontend/src/App.css */
+.ocorrencia-item.clickable {
+  cursor: pointer;
+}
+.ocorrencia-item.clickable:hover {
+  background-color: #f9f9f9;
+}
+.detail-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: left;
+}
+.back-btn {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.back-btn:hover {
+  background-color: #f0f0f0;
+}

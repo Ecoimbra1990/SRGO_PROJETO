@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api'; // Importa a nossa configuração do axios
 
-function OcorrenciaList() {
+function OcorrenciaList({ onOcorrenciaSelect }) {
   // Estado para armazenar a lista de ocorrências
   const [ocorrencias, setOcorrencias] = useState([]);
   // Estado para mensagens de carregamento ou erro
@@ -35,21 +35,23 @@ function OcorrenciaList() {
   return (
     <div className="list-container">
       <h2>Ocorrências Registadas</h2>
-      {ocorrencias.length === 0 ? (
-        <p>Nenhuma ocorrência registada.</p>
-      ) : (
+      {/* ... */}
         <ul className="ocorrencia-list">
           {ocorrencias.map(ocorrencia => (
-            <li key={ocorrencia.id} className="ocorrencia-item">
+            // 2. Adicione o onClick ao item da lista
+            <li 
+              key={ocorrencia.id} 
+              className="ocorrencia-item clickable" // Adicione a classe 'clickable'
+              onClick={() => onOcorrenciaSelect(ocorrencia.id)} // Chama a função com o ID
+            >
               <strong>{ocorrencia.tipo_ocorrencia.replace(/([A-Z])/g, ' $1').trim()}</strong>
               <p>{new Date(ocorrencia.data_fato).toLocaleString('pt-BR')}</p>
               <p>{ocorrencia.descricao_fato}</p>
             </li>
           ))}
         </ul>
-      )}
+      {/* ... */}
     </div>
   );
 }
-
 export default OcorrenciaList;
