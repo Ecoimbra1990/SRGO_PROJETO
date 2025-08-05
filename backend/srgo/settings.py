@@ -80,8 +80,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Altere esta linha no final do seu ficheiro settings.py
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage" # Removemos 'Manifest'
 
-# ADICIONE ESTA LINHA: informa ao Django onde procurar por ficheiros estáticos globais
-STATICFILES_DIRS = [os.path.join(BASE_DIR.parent, 'assets')]
+# Altere esta linha no seu ficheiro settings.py
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -100,7 +100,7 @@ JAZZMIN_SETTINGS = {
     "site_brand": "SRGO COPPM",
 
     # Caminho para a sua logo (o Django irá encontrá-la nos ficheiros estáticos)
-    "site_logo": "coppm.png", #
+    "site_logo": "assets/coppm.png",
 
     # Mensagem de boas-vindas na tela de login
     "welcome_sign": "Bem-vindo ao SRGO",
