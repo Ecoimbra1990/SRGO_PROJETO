@@ -3,24 +3,25 @@ import axios from 'axios';
 import { createOcorrencia, updateOcorrencia } from '../api';
 import './OcorrenciaForm.css';
 
-const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
-    const initialState = {
-        tipo_ocorrencia: '',
-        data_fato: '',
-        descricao_fato: '',
-        fonte_informacao: '',
-        caderno_informativo: '',
-        evolucao_ocorrencia: '',
-        cep: '',
-        logradouro: '',
-        bairro: '',
-        cidade: '',
-        uf: '',
-        latitude: '',
-        longitude: '',
-        envolvidos: [],
-    };
+// Mover initialState para fora do componente para que seja uma constante estável
+const initialState = {
+    tipo_ocorrencia: '',
+    data_fato: '',
+    descricao_fato: '',
+    fonte_informacao: '',
+    caderno_informativo: '',
+    evolucao_ocorrencia: '',
+    cep: '',
+    logradouro: '',
+    bairro: '',
+    cidade: '',
+    uf: '',
+    latitude: '',
+    longitude: '',
+    envolvidos: [],
+};
 
+const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [formData, setFormData] = useState(initialState);
     const [cepLoading, setCepLoading] = useState(false);
 
@@ -35,7 +36,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         } else {
             setFormData(initialState);
         }
-    }, [existingOcorrencia]);
+    }, [existingOcorrencia]); // Agora não há mais dependência em falta
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
