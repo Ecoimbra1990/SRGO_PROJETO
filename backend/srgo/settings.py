@@ -76,10 +76,17 @@ USE_TZ = True
 # --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS ATUALIZADA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# ADICIONE ESTA LINHA: informa ao Django onde procurar por ficheiros estáticos globais (como a sua logo)
+# --- NOVA CONFIGURAÇÃO DO WHITENOISE ---
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# ...
+
+# ADICIONE ESTA LINHA: informa ao Django onde procurar por ficheiros estáticos globais
 STATICFILES_DIRS = [os.path.join(BASE_DIR.parent, 'assets')]
+
+# --- NOVA CONFIGURAÇÃO DO WHITENOISE ---
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# ...
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
