@@ -7,10 +7,10 @@ class OPM(models.Model):
 
 class Efetivo(models.Model):
     nome = models.CharField(max_length=255)
-    matricula = models.CharField(max_length=20, unique=True)
+    matricula = models.CharField(max_length=30, unique=True) # Aumentado
     posto_graduacao = models.CharField(max_length=50, verbose_name="Posto/Grad.")
     unidade = models.ForeignKey(OPM, on_delete=models.SET_NULL, null=True, blank=True)
-    telefone = models.CharField(max_length=20, blank=True, null=True)
+    telefone = models.CharField(max_length=30, blank=True, null=True) # Aumentado
 
     def __str__(self):
         return f"{self.posto_graduacao} {self.nome} - {self.matricula}"

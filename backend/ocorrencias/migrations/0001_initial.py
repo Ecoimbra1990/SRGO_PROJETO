@@ -49,9 +49,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('nome', models.CharField(max_length=255)),
-                ('matricula', models.CharField(max_length=20, unique=True)),
+                ('matricula', models.CharField(max_length=30, unique=True)),
                 ('posto_graduacao', models.CharField(max_length=50, verbose_name='Posto/Grad.')),
-                ('telefone', models.CharField(blank=True, max_length=20, null=True)),
+                ('telefone', models.CharField(blank=True, max_length=30, null=True)),
                 ('unidade', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='ocorrencias.opm')),
             ],
         ),
