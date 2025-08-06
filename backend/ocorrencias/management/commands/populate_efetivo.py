@@ -22,7 +22,7 @@ class Command(BaseCommand):
             gc = gspread.service_account_from_dict(credentials)
 
             # Nome da sua planilha e da folha de cálculo
-            spreadsheet_name = os.environ.get('GOOGLE_SHEET_NAME', 'efetivo.xlsx')
+            spreadsheet_name = os.environ.get('GOOGLE_SHEET_NAME', 'efetivo')
             worksheet_name = os.environ.get('GOOGLE_SHEET_WORKSHEET_NAME', 'efetivo')
             
             self.stdout.write(f'Opening spreadsheet "{spreadsheet_name}" and worksheet "{worksheet_name}"...')
