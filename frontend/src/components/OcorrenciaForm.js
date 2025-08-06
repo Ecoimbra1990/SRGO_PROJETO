@@ -1,118 +1,121 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { createOcorrencia, updateOcorrencia } from '../api';
+import { createOcorrencia, updateOcorrencia, getOrganizacoes, getTiposOcorrencia, createTipoOcorrencia, getCadernos, createCaderno } from '../api';
 import './OcorrenciaForm.css';
 
-// Mover initialState para fora do componente para que seja uma constante estável
 const initialState = {
-    tipo_ocorrencia: '',
-    data_fato: '',
-    descricao_fato: '',
-    fonte_informacao: '',
-    caderno_informativo: '',
-    evolucao_ocorrencia: '',
-    cep: '',
-    logradouro: '',
-    bairro: '',
-    cidade: '',
-    uf: '',
-    latitude: '',
-    longitude: '',
-    envolvidos: [],
+    tipo_ocorrencia: '', data_fato: '', descricao_fato: '',
+    fonte_informacao: '', caderno_informativo: '', evolucao_ocorrencia: '',
+    cep: '', logradouro: '', bairro: '', cidade: '', uf: '',
+    latitude: '', longitude: '', envolvidos: [],
 };
 
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [formData, setFormData] = useState(initialState);
     const [cepLoading, setCepLoading] = useState(false);
+    const [organizacoes, setOrganizacoes] = useState([]);
+    const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
+    const [cadernos, setCadernos] = useState([]);
+    
+    // Estados para os formulários inline
+    const [showNovoTipo, setShowNovoTipo] = useState(false);
+    const [novoTipoNome, setNovoTipoNome] = useState("");
+    const [showNovoCaderno, setShowNovoCaderno] = useState(false);
+    const [novoCadernoNome, setNovoCadernoNome] = useState("");
 
     useEffect(() => {
         if (existingOcorrencia && existingOcorrencia.id) {
             setFormData({
                 ...initialState,
                 ...existingOcorrencia,
+                tipo_ocorrencia: existingOcorrencia.tipo_ocorrencia || '',
+                caderno_informativo: existingOcorrencia.caderno_informativo || '',
                 data_fato: existingOcorrencia.data_fato ? existingOcorrencia.data_fato.substring(0, 16) : '',
-                envolvidos: existingOcorrencia.envolvidos || [],
+                envolvidos: existingOcorrencia.envolvidos?.map(e => ({...e, organizacao_criminosa: e.organizacao_criminosa || null })) || [],
             });
         } else {
             setFormData(initialState);
         }
-    }, [existingOcorrencia]); // Agora não há mais dependência em falta
+    }, [existingOcorrencia]);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+    const fetchLookups = async () => {
+        try {
+            const [orgsRes, tiposRes, cadernosRes] = await Promise.all([getOrganizacoes(), getTiposOcorrencia(), getCadernos()]);
+            setOrganizacoes(orgsRes.data);
+            setTiposOcorrencia(tiposRes.data);
+            setCadernos(cadernosRes.data);
+        } catch (error) { console.error("Erro ao buscar dados iniciais:", error); }
     };
 
-    const handleCepBlur = async (e) => {
-        const cep = e.target.value.replace(/\D/g, '');
-        if (cep.length === 8) {
-            setCepLoading(true);
-            try {
-                const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
-                const { logradouro, bairro, localidade, uf } = response.data;
-                setFormData(prev => ({ ...prev, logradouro, bairro, cidade: localidade, uf }));
-            } catch (error) {
-                console.error("Erro ao buscar CEP:", error);
-                alert("CEP não encontrado.");
-            } finally {
-                setCepLoading(false);
-            }
+    useEffect(() => {
+        fetchLookups();
+    }, []);
+
+    const handleCreateLookup = async (createFn, name, setNameFn, setShowFn, fetchFn) => {
+        if (name.trim() === "") return;
+        try {
+            await createFn({ nome: name });
+            setNameFn("");
+            setShowFn(false);
+            fetchFn();
+        } catch (error) {
+            console.error("Erro ao criar novo item:", error);
+            alert("Falha ao criar novo item.");
         }
     };
 
-    // --- Funções para Pessoas Envolvidas ---
-    const addEnvolvido = () => {
-        setFormData(prev => ({
-            ...prev,
-            envolvidos: [...prev.envolvidos, { nome: '', documento: '', tipo_envolvimento: 'VITIMA', observacoes: '', procedimentos: [] }]
-        }));
+    const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    const handleCepBlur = async (e) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+        setCepLoading(true);
+        try {
+            const { data } = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+            setFormData(p => ({ ...p, logradouro: data.logradouro, bairro: data.bairro, cidade: data.localidade, uf: data.uf }));
+        } catch (error) { alert("CEP não encontrado."); } 
+        finally { setCepLoading(false); }
     };
 
-    const removeEnvolvido = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            envolvidos: prev.envolvidos.filter((_, i) => i !== index)
-        }));
-    };
-
+    const addEnvolvido = () => setFormData(p => ({ ...p, envolvidos: [...p.envolvidos, { nome: '', documento: '', tipo_envolvimento: 'VITIMA', observacoes: '', organizacao_criminosa: null, procedimentos: [] }] }));
+    const removeEnvolvido = (index) => setFormData(p => ({ ...p, envolvidos: p.envolvidos.filter((_, i) => i !== index) }));
     const handleEnvolvidoChange = (index, e) => {
         const { name, value } = e.target;
         const novosEnvolvidos = [...formData.envolvidos];
-        novosEnvolvidos[index][name] = value;
+        novosEnvolvidos[index][name] = value === '' ? null : value;
         setFormData({ ...formData, envolvidos: novosEnvolvidos });
     };
 
-    // --- Funções para Procedimentos Penais ---
-    const addProcedimento = (envolvidoIndex) => {
+    const addProcedimento = (eIndex) => {
         const novosEnvolvidos = [...formData.envolvidos];
-        novosEnvolvidos[envolvidoIndex].procedimentos.push({ numero_processo: '', vara_tribunal: '', status: 'EM_INVESTIGACAO', detalhes: '' });
+        novosEnvolvidos[eIndex].procedimentos.push({ numero_processo: '', vara_tribunal: '', status: 'EM_INVESTIGACAO', detalhes: '' });
         setFormData({ ...formData, envolvidos: novosEnvolvidos });
     };
-
-    const removeProcedimento = (envolvidoIndex, procIndex) => {
+    const removeProcedimento = (eIndex, pIndex) => {
         const novosEnvolvidos = [...formData.envolvidos];
-        novosEnvolvidos[envolvidoIndex].procedimentos = novosEnvolvidos[envolvidoIndex].procedimentos.filter((_, i) => i !== procIndex);
+        novosEnvolvidos[eIndex].procedimentos = novosEnvolvidos[eIndex].procedimentos.filter((_, i) => i !== pIndex);
         setFormData({ ...formData, envolvidos: novosEnvolvidos });
     };
-
-    const handleProcedimentoChange = (envolvidoIndex, procIndex, e) => {
+    const handleProcedimentoChange = (eIndex, pIndex, e) => {
         const { name, value } = e.target;
         const novosEnvolvidos = [...formData.envolvidos];
-        novosEnvolvidos[envolvidoIndex].procedimentos[procIndex][name] = value;
+        novosEnvolvidos[eIndex].procedimentos[pIndex][name] = value;
         setFormData({ ...formData, envolvidos: novosEnvolvidos });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (formData.id) {
-                await updateOcorrencia(formData.id, formData);
-            } else {
-                await createOcorrencia(formData);
+            const payload = { ...formData };
+            if (!payload.tipo_ocorrencia) {
+                alert("Por favor, selecione um tipo de ocorrência.");
+                return;
             }
+            if (formData.id) await updateOcorrencia(formData.id, payload);
+            else await createOcorrencia(payload);
             onSuccess();
         } catch (error) {
-            console.error("Erro ao salvar ocorrência:", error);
+            console.error("Erro ao salvar ocorrência:", error.response?.data);
             alert("Falha ao salvar a ocorrência.");
         }
     };
@@ -123,11 +126,33 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
             
             <div className="form-section">
                 <h3>Dados da Ocorrência</h3>
-                <input name="tipo_ocorrencia" value={formData.tipo_ocorrencia} onChange={handleInputChange} placeholder="Tipo da Ocorrência" required />
+                <select name="tipo_ocorrencia" value={formData.tipo_ocorrencia} onChange={handleInputChange} required>
+                    <option value="">-- Selecione o Tipo --</option>
+                    {tiposOcorrencia.map(tipo => <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>)}
+                </select>
+                <button type="button" onClick={() => setShowNovoTipo(!showNovoTipo)} className="add-button-inline">{showNovoTipo ? 'Cancelar' : '+ Novo Tipo'}</button>
+                {showNovoTipo && (
+                    <div className="inline-add-form">
+                        <input value={novoTipoNome} onChange={(e) => setNovoTipoNome(e.target.value)} placeholder="Nome do novo tipo" />
+                        <button type="button" onClick={() => handleCreateLookup(createTipoOcorrencia, novoTipoNome, setNovoTipoNome, setShowNovoTipo, fetchLookups)}>Salvar</button>
+                    </div>
+                )}
+
+                <select name="caderno_informativo" value={formData.caderno_informativo} onChange={handleInputChange}>
+                    <option value="">-- Selecione o Caderno --</option>
+                    {cadernos.map(cad => <option key={cad.id} value={cad.id}>{cad.nome}</option>)}
+                </select>
+                <button type="button" onClick={() => setShowNovoCaderno(!showNovoCaderno)} className="add-button-inline">{showNovoCaderno ? 'Cancelar' : '+ Novo Caderno'}</button>
+                {showNovoCaderno && (
+                    <div className="inline-add-form">
+                        <input value={novoCadernoNome} onChange={(e) => setNovoCadernoNome(e.target.value)} placeholder="Nome do novo caderno" />
+                        <button type="button" onClick={() => handleCreateLookup(createCaderno, novoCadernoNome, setNovoCadernoNome, setShowNovoCaderno, fetchLookups)}>Salvar</button>
+                    </div>
+                )}
+
                 <input name="data_fato" value={formData.data_fato} onChange={handleInputChange} type="datetime-local" required />
                 <textarea name="descricao_fato" value={formData.descricao_fato} onChange={handleInputChange} placeholder="Descrição do Fato" required />
                 <input name="fonte_informacao" value={formData.fonte_informacao} onChange={handleInputChange} placeholder="Fonte da Informação" />
-                <input name="caderno_informativo" value={formData.caderno_informativo} onChange={handleInputChange} placeholder="Caderno Informativo" />
                 <textarea name="evolucao_ocorrencia" value={formData.evolucao_ocorrencia} onChange={handleInputChange} placeholder="Evolução da Ocorrência" />
             </div>
 
@@ -156,6 +181,10 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                             <option value="SUSPEITO">Suspeito</option>
                             <option value="AUTOR">Autor</option>
                             <option value="OUTRO">Outro</option>
+                        </select>
+                        <select name="organizacao_criminosa" value={envolvido.organizacao_criminosa || ''} onChange={(e) => handleEnvolvidoChange(index, e)}>
+                            <option value="">Nenhuma Organização</option>
+                            {organizacoes.map(org => <option key={org.id} value={org.id}>{org.nome}</option>)}
                         </select>
                         <textarea name="observacoes" value={envolvido.observacoes} onChange={(e) => handleEnvolvidoChange(index, e)} placeholder="Observações" />
                         
