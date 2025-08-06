@@ -21,11 +21,11 @@ export const createOcorrencia = (ocorrencia) => api.post('/ocorrencias/', ocorre
 export const updateOcorrencia = (id, ocorrencia) => api.put(`/ocorrencias/${id}/`, ocorrencia);
 export const deleteOcorrencia = (id) => api.delete(`/ocorrencias/${id}/`);
 
-// Organizações Criminosas
+// Lookups
 export const getOrganizacoes = () => api.get('/organizacoes/');
-
-// Tipos de Ocorrência
 export const getTiposOcorrencia = () => api.get('/tipos-ocorrencia/');
 export const createTipoOcorrencia = (tipo) => api.post('/tipos-ocorrencia/', tipo);
+export const getCadernos = () => api.get('/cadernos/');
+export const createCaderno = (caderno) => api.post('/cadernos/', caderno);
 
 export default api;
