@@ -3,7 +3,7 @@ import json
 import gspread
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from ocorrencias.models import Efetivo
+from ocorrencias.models import Efetivo, OPM
 
 class Command(BaseCommand):
     help = 'Populates the Efetivo table from a Google Sheet.'
@@ -12,6 +12,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE('Starting to populate Efetivo table...'))
 
         try:
+            # Carregar credenciais a partir da variável de ambiente
             credentials_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
             if not credentials_json:
                 self.stdout.write(self.style.ERROR('GOOGLE_CREDENTIALS_JSON environment variable not set.'))
@@ -20,6 +21,7 @@ class Command(BaseCommand):
             credentials = json.loads(credentials_json)
             gc = gspread.service_account_from_dict(credentials)
 
+            # Nome da sua planilha e da folha de cálculo
             spreadsheet_name = os.environ.get('GOOGLE_SHEET_NAME', 'efetivo.xlsx')
             worksheet_name = os.environ.get('GOOGLE_SHEET_WORKSHEET_NAME', 'efetivo')
             
@@ -37,17 +39,28 @@ class Command(BaseCommand):
             
             created_count = 0
             updated_count = 0
+            opm_cache = {} # Cache para evitar buscas repetidas ao banco de dados
 
             for record in records:
-                # Usamos update_or_create para evitar duplicados e atualizar dados existentes
-                # com base na matrícula, que é única.
+                opm_nome = record.get('OPM')
+                opm_obj = None
+
+                # CORREÇÃO: Busca ou cria a instância da OPM
+                if opm_nome:
+                    if opm_nome in opm_cache:
+                        opm_obj = opm_cache[opm_nome]
+                    else:
+                        opm_obj, _ = OPM.objects.get_or_create(nome=opm_nome)
+                        opm_cache[opm_nome] = opm_obj
+
+                # Usa update_or_create para evitar duplicados e atualizar dados
                 obj, created = Efetivo.objects.update_or_create(
                     matricula=record.get('MATRICULA'),
                     defaults={
                         'nome': record.get('NOME'),
                         'posto_graduacao': record.get('GH'),
-                        'unidade': record.get('OPM'),
-                        'telefone': record.get('TELEFONE', ''), # Campo opcional
+                        'unidade': opm_obj, # Associa a instância da OPM, não o texto
+                        'telefone': record.get('TELEFONE', ''),
                     }
                 )
                 if created:
