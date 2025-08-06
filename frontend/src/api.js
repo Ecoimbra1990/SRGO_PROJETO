@@ -26,6 +26,10 @@ export const getOcorrencias = (filters = {}) => {
     
     return api.get('/ocorrencias/', { params });
 };
+export const getOcorrencia = (id) => api.get(`/ocorrencias/${id}/`);
+export const createOcorrencia = (ocorrencia) => api.post('/ocorrencias/', ocorrencia);
+export const updateOcorrencia = (id, ocorrencia) => api.put(`/ocorrencias/${id}/`, ocorrencia);
+export const deleteOcorrencia = (id) => api.delete(`/ocorrencias/${id}/`);
 
 // Lookups
 export const getOrganizacoes = () => api.get('/organizacoes/');
