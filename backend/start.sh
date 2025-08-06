@@ -5,21 +5,15 @@ set -o errexit
 pip install -r requirements.txt
 python manage.py collectstatic --no-input
 
-echo "--- Limpando tabelas da app 'ocorrencias' ---"
-python manage.py reset_app_db
-
-echo "--- Redefinindo o histórico de migrações ---"
-python manage.py migrate ocorrencias zero --fake
-
-echo "--- Aplicando migrações ---"
+# Executa as migrações. Com uma base de dados nova e o ficheiro de migração correto,
+# este comando irá criar todas as tabelas do zero.
 python manage.py migrate
 
-echo "--- Criando superusuário ---"
+# Cria o superusuário (se não existir)
 python manage.py create_initial_superuser
 
-# (NOVO) Popula a tabela Efetivo a partir do Google Sheets
-echo "--- Populando tabela Efetivo ---"
+# Popula a tabela Efetivo a partir do Google Sheets
 python manage.py populate_efetivo
 
-echo "--- Iniciando o servidor Gunicorn ---"
+# Inicia o servidor web
 gunicorn srgo.wsgi
