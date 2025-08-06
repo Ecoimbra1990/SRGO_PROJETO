@@ -2,13 +2,14 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Efetivo(models.Model):
-    nome_guerra = models.CharField(max_length=100)
+    nome = models.CharField(max_length=255)
     matricula = models.CharField(max_length=20, unique=True)
-    posto_graduacao = models.CharField(max_length=50)
-    unidade = models.CharField(max_length=100)
+    posto_graduacao = models.CharField(max_length=50, verbose_name="Posto/Grad.")
+    unidade = models.CharField(max_length=100, verbose_name="OPM")
+    telefone = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.posto_graduacao} {self.nome_guerra} - {self.matricula}"
+        return f"{self.posto_graduacao} {self.nome} - {self.matricula}"
 
 class OrganizacaoCriminosa(models.Model):
     nome = models.CharField(max_length=255, unique=True)
