@@ -16,4 +16,4 @@ python manage.py create_initial_superuser
 python manage.py populate_efetivo
 
 # Inicia o servidor web
-gunicorn srgo.wsgi
+gunicorn srgo.wsgi --bind 0.0.0.0:$PORT
