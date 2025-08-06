@@ -1,13 +1,25 @@
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, status
+from rest_framework.response import Response
 from .models import Ocorrencia, OrganizacaoCriminosa, TipoOcorrencia, CadernoInformativo
-from .serializers import OcorrenciaSerializer, UserSerializer, OrganizacaoCriminosaSerializer, TipoOcorrenciaSerializer, CadernoInformativoSerializer
+from .serializers import (
+    OcorrenciaSerializer, UserRegistrationSerializer, OrganizacaoCriminosaSerializer, 
+    TipoOcorrenciaSerializer, CadernoInformativoSerializer
+)
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
 
-class UserCreate(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+# NOVA VIEW PARA O REGISTO DE UTILIZADORES
+class UserCreate(generics.GenericAPIView):
+    serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Utilizador registado com sucesso!"}, status=status.HTTP_201_CREATED)
+
+# --- ViewSets existentes (sem alterações) ---
 
 class OcorrenciaViewSet(viewsets.ModelViewSet):
     queryset = Ocorrencia.objects.all().order_by('-data_criacao')

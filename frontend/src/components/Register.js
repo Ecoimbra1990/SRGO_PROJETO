@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../api';
 
 const Register = () => {
-    const [username, setUsername] = useState('');
+    const [matricula, setMatricula] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -14,13 +14,16 @@ const Register = () => {
         setError('');
         setSuccess('');
         try {
-            await registerUser({ username, password });
-            setSuccess('Usuário registrado com sucesso! Você será redirecionado para o login.');
+            // Enviamos a matrícula e a password
+            await registerUser({ matricula, password });
+            setSuccess('Utilizador registado com sucesso! Você será redirecionado para o login.');
             setTimeout(() => {
                 navigate('/login');
-            }, 2000); // Aguarda 2 segundos antes de redirecionar
+            }, 2000);
         } catch (err) {
-            setError('Falha no registro. Tente outro nome de usuário.');
+            // Mostra a mensagem de erro vinda da API
+            const errorMessage = err.response?.data?.matricula?.[0] || 'Falha no registro. Verifique a matrícula.';
+            setError(errorMessage);
             console.error(err);
         }
     };
@@ -30,11 +33,11 @@ const Register = () => {
             <h2>Registro de Novo Usuário</h2>
             <form onSubmit={handleSubmit} className="auth-form">
                 <div className="form-group">
-                    <label>Usuário:</label>
+                    <label>Matrícula:</label>
                     <input
                         type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        value={matricula}
+                        onChange={(e) => setMatricula(e.target.value)}
                         required
                     />
                 </div>
