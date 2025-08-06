@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { createOcorrencia, updateOcorrencia, getOrganizacoes, getTiposOcorrencia, createTipoOcorrencia, getCadernos, createCaderno } from '../api';
+import { createOcorrencia, updateOcorrencia, getOrganizacoes, getTiposOcorrencia, createTipoOcorrencia, getCadernos, createCaderno, getOPMs } from '../api';
 import './OcorrenciaForm.css';
 
 const initialState = {
     tipo_ocorrencia: '', data_fato: '', descricao_fato: '',
     fonte_informacao: '', caderno_informativo: '', evolucao_ocorrencia: '',
-    cep: '', logradouro: '', bairro: '', cidade: '', uf: '',
+    opm_area: '', cep: '', logradouro: '', bairro: '', cidade: '', uf: '',
     latitude: '', longitude: '', envolvidos: [],
 };
 
@@ -16,8 +16,8 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [organizacoes, setOrganizacoes] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
     const [cadernos, setCadernos] = useState([]);
+    const [opms, setOpms] = useState([]);
     
-    // Estados para os formulários inline
     const [showNovoTipo, setShowNovoTipo] = useState(false);
     const [novoTipoNome, setNovoTipoNome] = useState("");
     const [showNovoCaderno, setShowNovoCaderno] = useState(false);
@@ -30,6 +30,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                 ...existingOcorrencia,
                 tipo_ocorrencia: existingOcorrencia.tipo_ocorrencia || '',
                 caderno_informativo: existingOcorrencia.caderno_informativo || '',
+                opm_area: existingOcorrencia.opm_area || '',
                 data_fato: existingOcorrencia.data_fato ? existingOcorrencia.data_fato.substring(0, 16) : '',
                 envolvidos: existingOcorrencia.envolvidos?.map(e => ({...e, organizacao_criminosa: e.organizacao_criminosa || null })) || [],
             });
@@ -40,10 +41,11 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
 
     const fetchLookups = async () => {
         try {
-            const [orgsRes, tiposRes, cadernosRes] = await Promise.all([getOrganizacoes(), getTiposOcorrencia(), getCadernos()]);
+            const [orgsRes, tiposRes, cadernosRes, opmsRes] = await Promise.all([getOrganizacoes(), getTiposOcorrencia(), getCadernos(), getOPMs()]);
             setOrganizacoes(orgsRes.data);
             setTiposOcorrencia(tiposRes.data);
             setCadernos(cadernosRes.data);
+            setOpms(opmsRes.data);
         } catch (error) { console.error("Erro ao buscar dados iniciais:", error); }
     };
 
@@ -158,6 +160,10 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
 
             <div className="form-section">
                 <h3>Endereço</h3>
+                <select name="opm_area" value={formData.opm_area} onChange={handleInputChange}>
+                    <option value="">-- Selecione a OPM da Área --</option>
+                    {opms.map(opm => <option key={opm.id} value={opm.id}>{opm.nome}</option>)}
+                </select>
                 <input name="cep" value={formData.cep} onChange={handleInputChange} onBlur={handleCepBlur} placeholder="CEP" />
                 {cepLoading && <p>Buscando CEP...</p>}
                 <input name="logradouro" value={formData.logradouro} onChange={handleInputChange} placeholder="Logradouro" />

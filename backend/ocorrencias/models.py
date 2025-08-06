@@ -1,11 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class OPM(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    def __str__(self): return self.nome
+
 class Efetivo(models.Model):
     nome = models.CharField(max_length=255)
     matricula = models.CharField(max_length=20, unique=True)
     posto_graduacao = models.CharField(max_length=50, verbose_name="Posto/Grad.")
-    unidade = models.CharField(max_length=100, verbose_name="OPM")
+    unidade = models.ForeignKey(OPM, on_delete=models.SET_NULL, null=True, blank=True)
     telefone = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
@@ -29,6 +33,7 @@ class CadernoInformativo(models.Model):
 class Ocorrencia(models.Model):
     tipo_ocorrencia = models.ForeignKey(TipoOcorrencia, on_delete=models.SET_NULL, null=True)
     caderno_informativo = models.ForeignKey(CadernoInformativo, on_delete=models.SET_NULL, null=True, blank=True)
+    opm_area = models.ForeignKey(OPM, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="OPM da Área")
     data_fato = models.DateTimeField()
     descricao_fato = models.TextField()
     fonte_informacao = models.CharField(max_length=200, blank=True)

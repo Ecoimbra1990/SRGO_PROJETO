@@ -92,7 +92,7 @@ if 'DATABASE_URL' in os.environ:
             ssl_require=True
         )
     }
-    # (NOVA LINHA) Adiciona o schema padrão para o PostgreSQL
+    # (LINHA ESSENCIAL) Adiciona o schema padrão para o PostgreSQL no Render
     DATABASES['default']['OPTIONS'] = {'options': '-c search_path=public'}
 else:
     DATABASES = {

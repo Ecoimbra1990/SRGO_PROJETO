@@ -1,43 +1,11 @@
 from rest_framework import serializers
-from .models import Ocorrencia, PessoaEnvolvida, ProcedimentoPenal, OrganizacaoCriminosa, TipoOcorrencia, CadernoInformativo, Efetivo
+from .models import *
 from django.contrib.auth.models import User
 
-# NOVO SERIALIZER PARA O REGISTO
-class UserRegistrationSerializer(serializers.Serializer):
-    matricula = serializers.CharField(max_length=20)
-    password = serializers.CharField(write_only=True)
-
-    def validate_matricula(self, value):
-        # Validação 1: Verifica se a matrícula existe no efetivo
-        if not Efetivo.objects.filter(matricula=value).exists():
-            raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
-        
-        # Validação 2: Verifica se já existe um utilizador com esta matrícula
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
-            
-        return value
-
-    def create(self, validated_data):
-        matricula = validated_data['matricula']
-        password = validated_data['password']
-        
-        # Busca os dados do efetivo para preencher o nome do utilizador
-        efetivo_data = Efetivo.objects.get(matricula=matricula)
-        
-        nome_completo = efetivo_data.nome.split()
-        first_name = nome_completo[0]
-        last_name = ' '.join(nome_completo[1:]) if len(nome_completo) > 1 else ''
-
-        user = User.objects.create_user(
-            username=matricula,
-            password=password,
-            first_name=first_name,
-            last_name=last_name
-        )
-        return user
-
-# --- Serializers existentes (sem alterações, apenas para contexto) ---
+class OPMSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OPM
+        fields = ['id', 'nome']
 
 class OrganizacaoCriminosaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -71,22 +39,41 @@ class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
 class OcorrenciaSerializer(serializers.ModelSerializer):
     envolvidos = PessoaEnvolvidaSerializer(many=True, required=False)
     usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
+    usuario_registro_nome_completo = serializers.SerializerMethodField()
+    
     tipo_ocorrencia = serializers.PrimaryKeyRelatedField(queryset=TipoOcorrencia.objects.all(), allow_null=True)
     tipo_ocorrencia_nome = serializers.CharField(source='tipo_ocorrencia.nome', read_only=True, allow_null=True)
     caderno_informativo = serializers.PrimaryKeyRelatedField(queryset=CadernoInformativo.objects.all(), allow_null=True, required=False)
     caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
+    opm_area = serializers.PrimaryKeyRelatedField(queryset=OPM.objects.all(), allow_null=True, required=False)
+    opm_area_nome = serializers.CharField(source='opm_area.nome', read_only=True, allow_null=True)
 
     class Meta:
         model = Ocorrencia
         fields = [
             'id', 'tipo_ocorrencia', 'tipo_ocorrencia_nome', 
             'caderno_informativo', 'caderno_informativo_nome',
+            'opm_area', 'opm_area_nome',
             'data_fato', 'descricao_fato', 'fonte_informacao', 'evolucao_ocorrencia',
-            'usuario_registro', 'usuario_registro_username', 'data_criacao',
+            'usuario_registro', 'usuario_registro_username', 'usuario_registro_nome_completo',
             'cep', 'logradouro', 'bairro', 'cidade', 'uf', 'latitude', 'longitude',
             'envolvidos'
         ]
         read_only_fields = ['usuario_registro']
+
+    def get_usuario_registro_nome_completo(self, obj):
+        if obj.usuario_registro:
+            # Tenta buscar o nome completo no modelo User
+            full_name = obj.usuario_registro.get_full_name()
+            if full_name:
+                return full_name
+            # Se não houver, busca na tabela Efetivo como fallback
+            try:
+                efetivo = Efetivo.objects.get(matricula=obj.usuario_registro.username)
+                return efetivo.nome
+            except Efetivo.DoesNotExist:
+                return obj.usuario_registro.username # Retorna a matrícula se não encontrar
+        return None
 
     def _create_or_update_nested(self, instance, envolvidos_data):
         instance.envolvidos.all().delete()
@@ -107,3 +94,18 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         self._create_or_update_nested(instance, envolvidos_data)
         return instance
+
+class UserRegistrationSerializer(serializers.Serializer):
+    matricula = serializers.CharField(max_length=20)
+    password = serializers.CharField(write_only=True)
+    def validate_matricula(self, value):
+        if not Efetivo.objects.filter(matricula=value).exists(): raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
+        if User.objects.filter(username=value).exists(): raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
+        return value
+    def create(self, validated_data):
+        efetivo_data = Efetivo.objects.get(matricula=validated_data['matricula'])
+        nome_completo = efetivo_data.nome.split()
+        return User.objects.create_user(
+            username=validated_data['matricula'], password=validated_data['password'],
+            first_name=nome_completo[0], last_name=' '.join(nome_completo[1:])
+        )

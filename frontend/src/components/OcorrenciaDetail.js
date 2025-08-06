@@ -8,6 +8,7 @@ const OcorrenciaDetail = ({ ocorrenciaId }) => {
 
     useEffect(() => {
         const fetchOcorrencia = async () => {
+            if (!ocorrenciaId) return;
             try {
                 setLoading(true);
                 const response = await getOcorrencia(ocorrenciaId);
@@ -18,9 +19,7 @@ const OcorrenciaDetail = ({ ocorrenciaId }) => {
                 setLoading(false);
             }
         };
-        if (ocorrenciaId) {
-            fetchOcorrencia();
-        }
+        fetchOcorrencia();
     }, [ocorrenciaId]);
 
     if (loading) return <p>Carregando detalhes...</p>;
@@ -32,17 +31,18 @@ const OcorrenciaDetail = ({ ocorrenciaId }) => {
 
             <div className="detail-card">
                 <h3>Informações Gerais</h3>
-                <p><strong>Tipo:</strong> {ocorrencia.tipo_ocorrencia}</p>
+                <p><strong>Tipo:</strong> {ocorrencia.tipo_ocorrencia_nome}</p>
                 <p><strong>Data do Fato:</strong> {new Date(ocorrencia.data_fato).toLocaleString('pt-BR')}</p>
                 <p><strong>Descrição:</strong> {ocorrencia.descricao_fato}</p>
                 <p><strong>Evolução:</strong> {ocorrencia.evolucao_ocorrencia}</p>
                 <p><strong>Fonte:</strong> {ocorrencia.fonte_informacao}</p>
-                <p><strong>Caderno:</strong> {ocorrencia.caderno_informativo}</p>
-                <p><strong>Registrado por:</strong> {ocorrencia.usuario_registro_username}</p>
+                <p><strong>Caderno:</strong> {ocorrencia.caderno_informativo_nome || 'N/A'}</p>
+                <p><strong>Registrado por:</strong> {ocorrencia.usuario_registro_nome_completo}</p>
             </div>
 
             <div className="detail-card">
                 <h3>Localização</h3>
+                <p><strong>OPM da Área:</strong> {ocorrencia.opm_area_nome || 'N/A'}</p>
                 <p><strong>CEP:</strong> {ocorrencia.cep}</p>
                 <p><strong>Logradouro:</strong> {ocorrencia.logradouro}</p>
                 <p><strong>Bairro:</strong> {ocorrencia.bairro}</p>
