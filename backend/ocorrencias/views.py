@@ -1,6 +1,6 @@
 from rest_framework import viewsets, generics
-from .models import Ocorrencia, OrganizacaoCriminosa, TipoOcorrencia
-from .serializers import OcorrenciaSerializer, UserSerializer, OrganizacaoCriminosaSerializer, TipoOcorrenciaSerializer
+from .models import Ocorrencia, OrganizacaoCriminosa, TipoOcorrencia, CadernoInformativo
+from .serializers import OcorrenciaSerializer, UserSerializer, OrganizacaoCriminosaSerializer, TipoOcorrenciaSerializer, CadernoInformativoSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
 
@@ -24,4 +24,9 @@ class OrganizacaoCriminosaViewSet(viewsets.ModelViewSet):
 class TipoOcorrenciaViewSet(viewsets.ModelViewSet):
     queryset = TipoOcorrencia.objects.all().order_by('nome')
     serializer_class = TipoOcorrenciaSerializer
+    permission_classes = [IsAuthenticated]
+
+class CadernoInformativoViewSet(viewsets.ModelViewSet):
+    queryset = CadernoInformativo.objects.all().order_by('nome')
+    serializer_class = CadernoInformativoSerializer
     permission_classes = [IsAuthenticated]
