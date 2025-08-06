@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # exit on error
-#set -o errexit
+set -o errexit
 
 pip install -r requirements.txt
 python manage.py collectstatic --no-input
@@ -16,4 +16,5 @@ python manage.py create_initial_superuser
 python manage.py populate_efetivo
 
 # Inicia o servidor web
-gunicorn srgo.wsgi --bind 0.0.0.0:$PORT
+gunicorn srgo.wsgi:application --bind 0.0.0.0:$PORT
+
