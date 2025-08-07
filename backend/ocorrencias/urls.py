@@ -1,3 +1,4 @@
+from .views import LocalidadeViewSet
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
@@ -16,6 +17,7 @@ router.register(r'tipos-ocorrencia', TipoOcorrenciaViewSet, basename='tipoocorre
 router.register(r'cadernos', CadernoInformativoViewSet, basename='caderno')
 router.register(r'opms', OPMViewSet, basename='opm')
 router.register(r'modelos-arma', ModeloArmaViewSet, basename='modeloarma')
+router.register(r'localidades', LocalidadeViewSet, basename='localidade')
 
 urlpatterns = [
     path('', include(router.urls)),
