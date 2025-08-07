@@ -58,3 +58,11 @@ class OPMViewSet(viewsets.ModelViewSet):
     queryset = OPM.objects.all().order_by('nome')
     serializer_class = OPMSerializer
     permission_classes = [permissions.IsAuthenticated]
+   
+# --- NOVA VIEWSET PARA O CATÁLOGO DE ARMAS ---
+class ModeloArmaViewSet(viewsets.ModelViewSet):
+    queryset = ModeloArma.objects.all().order_by('modelo')
+    serializer_class = ModeloArmaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['modelo', 'marca', 'calibre']
