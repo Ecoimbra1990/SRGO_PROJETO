@@ -1,3 +1,5 @@
+// frontend/src/components/OcorrenciaList.js
+
 import React, { useState, useEffect } from 'react';
 import { getOcorrencias, getOPMs, getTiposOcorrencia } from '../api';
 import './OcorrenciaList.css';
