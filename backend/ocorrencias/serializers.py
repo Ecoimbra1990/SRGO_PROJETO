@@ -1,3 +1,5 @@
+# backend/ocorrencias/serializers.py
+
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
@@ -76,7 +78,8 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         return None
 
     def _create_or_update_nested(self, instance, envolvidos_data):
-        instance.envolvidos.all().delete()
+        # Limpa os envolvidos existentes para evitar duplicatas ao atualizar
+        instance.envolvidos.all().delete() 
         for envolvido_data in envolvidos_data:
             procedimentos_data = envolvido_data.pop('procedimentos', [])
             pessoa = PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
@@ -95,17 +98,25 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         self._create_or_update_nested(instance, envolvidos_data)
         return instance
 
+# Serializer para o registro de novos usuários
 class UserRegistrationSerializer(serializers.Serializer):
     matricula = serializers.CharField(max_length=20)
     password = serializers.CharField(write_only=True)
+
     def validate_matricula(self, value):
-        if not Efetivo.objects.filter(matricula=value).exists(): raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
-        if User.objects.filter(username=value).exists(): raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
+        if not Efetivo.objects.filter(matricula=value).exists():
+            raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
         return value
+
     def create(self, validated_data):
         efetivo_data = Efetivo.objects.get(matricula=validated_data['matricula'])
         nome_completo = efetivo_data.nome.split()
-        return User.objects.create_user(
-            username=validated_data['matricula'], password=validated_data['password'],
-            first_name=nome_completo[0], last_name=' '.join(nome_completo[1:])
+        user = User.objects.create_user(
+            username=validated_data['matricula'],
+            password=validated_data['password'],
+            first_name=nome_completo[0],
+            last_name=' '.join(nome_completo[1:]) if len(nome_completo) > 1 else ''
         )
+        return user
