@@ -7,11 +7,10 @@ class OPM(models.Model):
 
 class Efetivo(models.Model):
     nome = models.CharField(max_length=255)
-    matricula = models.CharField(max_length=30, unique=True) # Aumentado
+    matricula = models.CharField(max_length=30, unique=True)
     posto_graduacao = models.CharField(max_length=50, verbose_name="Posto/Grad.")
     unidade = models.ForeignKey(OPM, on_delete=models.SET_NULL, null=True, blank=True)
-    telefone = models.CharField(max_length=30, blank=True, null=True) # Aumentado
-
+    telefone = models.CharField(max_length=30, blank=True, null=True)
     def __str__(self):
         return f"{self.posto_graduacao} {self.nome} - {self.matricula}"
 
@@ -40,7 +39,6 @@ class Ocorrencia(models.Model):
     evolucao_ocorrencia = models.TextField(blank=True)
     usuario_registro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
-    
     cep = models.CharField(max_length=9, blank=True, null=True)
     logradouro = models.CharField(max_length=255, blank=True, null=True)
     bairro = models.CharField(max_length=100, blank=True, null=True)
@@ -48,7 +46,6 @@ class Ocorrencia(models.Model):
     uf = models.CharField(max_length=2, blank=True, null=True)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
-
     def __str__(self):
         return f"{self.tipo_ocorrencia.nome if self.tipo_ocorrencia else 'N/A'} - {self.data_fato.strftime('%d/%m/%Y')}"
 
@@ -70,3 +67,24 @@ class ProcedimentoPenal(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_INVESTIGACAO')
     detalhes = models.TextField(blank=True, null=True)
     def __str__(self): return f"Processo {self.numero_processo or 'N/A'}"
+
+# --- NOVOS MODELOS PARA ARMAS ---
+class ModeloArma(models.Model):
+    TIPO_CHOICES = [('FOGO', 'Arma de Fogo'), ('BRANCA', 'Arma Branca'), ('SIMULACRO', 'Simulacro'), ('ARTESANAL', 'Artesanal'), ('OUTRO', 'Outro')]
+    modelo = models.CharField(max_length=100, unique=True, help_text="Ex: Taurus G2C, IMBEL MD2")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='FOGO')
+    marca = models.CharField(max_length=100, blank=True, help_text="Ex: Taurus, Glock, IMBEL")
+    calibre = models.CharField(max_length=50, blank=True, help_text="Ex: 9mm, .40, .380")
+    def __str__(self): return self.modelo
+
+class ArmaApreendida(models.Model):
+    ocorrencia = models.ForeignKey(Ocorrencia, related_name='armas_apreendidas', on_delete=models.CASCADE)
+    modelo_catalogado = models.ForeignKey(ModeloArma, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Modelo (do Catálogo)")
+    tipo = models.CharField(max_length=100)
+    marca = models.CharField(max_length=100, blank=True)
+    modelo = models.CharField(max_length=100)
+    calibre = models.CharField(max_length=50, blank=True)
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de Série")
+    observacoes = models.TextField(blank=True)
+    def __str__(self):
+        return f"{self.modelo} ({self.numero_serie or 'S/N'}) - Ocorrência {self.ocorrencia.id}"
