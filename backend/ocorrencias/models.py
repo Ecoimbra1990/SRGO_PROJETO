@@ -88,3 +88,34 @@ class ArmaApreendida(models.Model):
     observacoes = models.TextField(blank=True)
     def __str__(self):
         return f"{self.modelo} ({self.numero_serie or 'S/N'}) - Ocorrência {self.ocorrencia.id}"
+class RISP(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    coordenadoria = models.CharField(max_length=255, blank=True, verbose_name="COORPIN")
+
+    def __str__(self):
+        return self.nome
+
+class AISP(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    risp = models.ForeignKey(RISP, on_delete=models.CASCADE, related_name='aisps')
+
+    def __str__(self):
+        return self.nome
+
+# Alteração no Modelo OPM existente
+class OPM(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    # Novo campo para relacionar a OPM com a AISP
+    aisp = models.ForeignKey(AISP, on_delete=models.SET_NULL, null=True, blank=True, related_name='opms')
+    # Pode manter outros campos se necessário
+
+    def __str__(self):
+        return self.nome
+
+# Adicionaríamos também uma tabela para os municípios/bairros
+class Localidade(models.Model):
+    municipio_bairro = models.CharField(max_length=255)
+    opm = models.ForeignKey(OPM, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return self.municipio_bairro
