@@ -5,11 +5,10 @@ import api, {
     getOrganizacoes,
     getCadernos,
     getModelosArma,
-    getLocalidadePorNome // Importação da nova função da API
+    getLocalidadePorNome
 } from '../api';
 import './OcorrenciaForm.css';
 
-// Estado inicial para uma nova ocorrência, garantindo que todos os arrays estão inicializados
 const initialOcorrenciaState = {
     tipo_ocorrencia: '',
     data_fato: '',
@@ -32,21 +31,17 @@ const initialOcorrenciaState = {
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
-
-    // Estados para os dados dos dropdowns
     const [opms, setOpms] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
     const [organizacoes, setOrganizacoes] = useState([]);
     const [cadernos, setCadernos] = useState([]);
-    
-    // Estados para as funcionalidades de autocompletar e sugestões
+    const [addressSuggestions, setAddressSuggestions] = useState([]);
     const [mostrarSecaoArmas, setMostrarSecaoArmas] = useState(false);
     const [armaSearchTerm, setArmaSearchTerm] = useState('');
     const [armaSuggestions, setArmaSuggestions] = useState([]);
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
-    const [areaSugerida, setAreaSugerida] = useState(null); // Novo estado para a área policial
+    const [areaSugerida, setAreaSugerida] = useState(null);
 
-    // Efeito para carregar dados de apoio (dropdowns)
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -67,7 +62,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         fetchData();
     }, []);
 
-    // Efeito para preencher o formulário ao editar uma ocorrência
     useEffect(() => {
         if (existingOcorrencia && existingOcorrencia.id) {
             const armas = existingOcorrencia.armas_apreendidas || [];
@@ -87,15 +81,12 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     }, [existingOcorrencia]);
 
-    // Efeito para buscar a área policial com base no endereço
     useEffect(() => {
         const termoBusca = ocorrencia.bairro || ocorrencia.cidade;
-
         if (termoBusca.length < 3) {
             setAreaSugerida(null);
             return;
         }
-
         const handler = setTimeout(async () => {
             try {
                 const response = await getLocalidadePorNome(termoBusca);
@@ -111,11 +102,33 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                 setAreaSugerida(null);
             }
         }, 500);
-
         return () => clearTimeout(handler);
     }, [ocorrencia.bairro, ocorrencia.cidade]);
 
-    // Efeito para buscar modelos de arma
+    // Efeito para buscar endereços por logradouro (CORRIGIDO)
+    useEffect(() => {
+        const logradouro = ocorrencia.logradouro || '';
+        if (logradouro.length < 3 || !ocorrencia.cidade || !ocorrencia.uf) {
+            setAddressSuggestions([]);
+            return;
+        }
+        const handler = setTimeout(async () => {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${ocorrencia.uf}/${ocorrencia.cidade}/${encodeURIComponent(logradouro)}/json/`);
+                const data = await response.json();
+                if (data && !data.erro && Array.isArray(data)) {
+                    setAddressSuggestions(data);
+                } else {
+                    setAddressSuggestions([]);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar endereço:', error);
+                setAddressSuggestions([]);
+            }
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [ocorrencia.logradouro, ocorrencia.cidade, ocorrencia.uf]);
+
     useEffect(() => {
         if (armaSearchTerm.length < 2 || activeSuggestionIndex === null) {
             setArmaSuggestions([]);
@@ -132,8 +145,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }, 300);
         return () => clearTimeout(handler);
     }, [armaSearchTerm, activeSuggestionIndex]);
-    
-    // Função para buscar coordenadas
+
     const fetchCoordinates = async (address) => {
         const apiKey = process.env.REACT_APP_Maps_API_KEY;
         if (!apiKey) {
@@ -158,6 +170,20 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setOcorrencia(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSuggestionClick = async (suggestion) => {
+        const addressData = {
+            logradouro: suggestion.logradouro,
+            bairro: suggestion.bairro,
+            cep: suggestion.cep.replace(/\D/g, ''),
+            cidade: suggestion.localidade,
+            uf: suggestion.uf,
+        };
+        setOcorrencia(prev => ({ ...prev, ...addressData, latitude: 'A procurar...', longitude: 'A procurar...' }));
+        setAddressSuggestions([]);
+        const { lat, lon } = await fetchCoordinates(addressData);
+        setOcorrencia(prev => ({ ...prev, ...addressData, latitude: lat, longitude: lon }));
     };
 
     const handleCepBlur = async (e) => {
@@ -288,11 +314,24 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
 
             <div className="form-section">
                 <h3>Localização</h3>
+                <p className="form-note">Preencha UF e Cidade para habilitar a busca por logradouro.</p>
                 <div style={{display: 'flex', gap: '10px'}}>
-                    <input style={{flex: 1}} type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
-                    <input style={{flex: 1}} type="text" name="bairro" value={ocorrencia.bairro} onChange={handleInputChange} placeholder="Bairro" />
+                    <input style={{flex: 1}} type="text" name="uf" value={ocorrencia.uf} onChange={handleInputChange} placeholder="UF" maxLength="2" />
+                    <input style={{flex: 3}} type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
                 </div>
-                <input type="text" name="logradouro" value={ocorrencia.logradouro || ''} onChange={handleInputChange} placeholder="Logradouro" />
+                <div className="autocomplete-container">
+                    <input type="text" name="logradouro" value={ocorrencia.logradouro || ''} onChange={handleInputChange} placeholder="Digite o Logradouro para buscar..." disabled={!ocorrencia.uf || !ocorrencia.cidade} />
+                    {addressSuggestions.length > 0 && (
+                        <ul className="suggestions-list">
+                            {addressSuggestions.map((suggestion, index) => (
+                                <li key={`${suggestion.cep}-${index}`} onClick={() => handleSuggestionClick(suggestion)}>
+                                    <strong>{suggestion.logradouro}</strong>, {suggestion.bairro} - {suggestion.localidade}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+                <input type="text" name="bairro" value={ocorrencia.bairro} onChange={handleInputChange} placeholder="Bairro" />
                 <input type="text" name="cep" value={ocorrencia.cep} onChange={handleInputChange} onBlur={handleCepBlur} placeholder="CEP" />
                 <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
                     <input style={{flex: 1}} type="text" name="latitude" value={ocorrencia.latitude} onChange={handleInputChange} placeholder="Latitude" />
