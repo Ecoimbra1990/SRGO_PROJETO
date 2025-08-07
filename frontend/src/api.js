@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// CORREÇÃO: A URL base deve apontar diretamente para o seu backend no Render.
+// A URL base deve apontar diretamente para o seu backend no Render.
 // A variável de ambiente no Render (REACT_APP_API_URL) também deve ter este valor.
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://srgo-backend.onrender.com';
 
@@ -18,7 +18,7 @@ api.interceptors.request.use(async config => {
 }, error => Promise.reject(error));
 
 // --- Auth ---
-// Os caminhos começam com /api/, que será combinado com a URL base.
+// Os caminhos agora começam com /api/, que será combinado com a URL base.
 export const loginUser = (credentials) => api.post('/api/token/', credentials);
 export const registerUser = (userData) => api.post('/api/register/', userData);
 
