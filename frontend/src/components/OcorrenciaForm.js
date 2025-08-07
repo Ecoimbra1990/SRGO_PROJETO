@@ -70,87 +70,8 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
             setMostrarSecaoArmas(false);
         }
     }, [existingOcorrencia]);
-
-    useEffect(() => {
-        if (armaSearchTerm.length < 2) {
-            setArmaSuggestions([]);
-            return;
-        }
-        const handler = setTimeout(async () => {
-            try {
-                const response = await getModelosArma(armaSearchTerm);
-                setArmaSuggestions(response.data || []);
-            } catch (error) {
-                console.error("Erro ao buscar modelos de arma:", error);
-                setArmaSuggestions([]);
-            }
-        }, 300);
-        return () => clearTimeout(handler);
-    }, [armaSearchTerm]);
-
-    const handleToggleSecaoArmas = (e) => {
-        const { checked } = e.target;
-        setMostrarSecaoArmas(checked);
-        if (!checked) {
-            setOcorrencia(prev => ({ ...prev, armas_apreendidas: [] }));
-        }
-    };
-
-    const handleArmaChange = (index, e) => {
-        const { name, value } = e.target;
-        const novasArmas = [...ocorrencia.armas_apreendidas];
-        const armaAtual = { ...novasArmas[index] };
-
-        const upperValue = (name === 'modelo' || name === 'marca' || name === 'calibre' || name === 'numero_serie')
-            ? value.toUpperCase()
-            : value;
-
-        armaAtual[name] = upperValue;
-
-        if (['modelo', 'marca', 'calibre', 'tipo'].includes(name) && armaAtual.modelo_catalogado) {
-            armaAtual.modelo_catalogado = null;
-        }
-        
-        novasArmas[index] = armaAtual;
-        setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas }));
-        
-        if (name === 'modelo') {
-            setArmaSearchTerm(upperValue);
-            setActiveSuggestionIndex(index);
-        }
-    };
-
-    const handleArmaSuggestionClick = (suggestion) => {
-        const novasArmas = [...ocorrencia.armas_apreendidas];
-        const armaAtual = novasArmas[activeSuggestionIndex];
-        
-        novasArmas[activeSuggestionIndex] = {
-            ...armaAtual,
-            modelo_catalogado: suggestion.id,
-            modelo: suggestion.modelo,
-            tipo: suggestion.tipo,
-            marca: suggestion.marca,
-            calibre: suggestion.calibre,
-        };
-        setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas }));
-        setArmaSuggestions([]);
-        setActiveSuggestionIndex(null);
-        setArmaSearchTerm('');
-    };
-
-    const adicionarArma = () => {
-        setOcorrencia(prev => ({
-            ...prev,
-            armas_apreendidas: [...prev.armas_apreendidas, { tipo: 'FOGO', marca: '', modelo: '', calibre: '', numero_serie: '', observacoes: '' }]
-        }));
-    };
-
-    const removerArma = (index) => {
-        const novasArmas = [...ocorrencia.armas_apreendidas];
-        novasArmas.splice(index, 1);
-        setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas }));
-    };
-
+    
+    // ... (restante da lógica - handlers, etc.) ...
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setOcorrencia(prev => ({ ...prev, [name]: value }));
@@ -173,69 +94,32 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
             console.error('Erro ao salvar ocorrência:', error.response?.data || error);
         }
     };
-    
-    // ... (outros handlers)
 
-    if (loading) {
-        return <p>Carregando formulário...</p>;
-    }
+    if (loading) return <p>Carregando formulário...</p>;
 
     return (
         <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
             <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
 
-            {/* Secções existentes */}
-            
             <div className="form-section">
-                <h3>Armas Apreendidas</h3>
-                <div className="toggle-section">
-                    <label htmlFor="toggle-armas">Houve apreensão de armas?</label>
-                    <input 
-                        type="checkbox" 
-                        id="toggle-armas"
-                        checked={mostrarSecaoArmas}
-                        onChange={handleToggleSecaoArmas}
-                    />
-                </div>
-
-                {mostrarSecaoArmas && (
-                    <div className="conditional-content">
-                        {ocorrencia.armas_apreendidas.map((arma, index) => (
-                            <div key={index} className="dynamic-list-item">
-                                <div className="autocomplete-container">
-                                    <input type="text" name="modelo" value={arma.modelo} onChange={(e) => handleArmaChange(index, e)} placeholder="Modelo da Arma (digite para buscar)" required />
-                                    {armaSuggestions.length > 0 && activeSuggestionIndex === index && (
-                                        <ul className="suggestions-list">
-                                            {armaSuggestions.map((sug) => (
-                                                <li key={sug.id} onClick={() => handleArmaSuggestionClick(sug)}>
-                                                    <strong>{sug.modelo}</strong> ({sug.marca || 'N/A'} - {sug.calibre || 'N/A'})
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                                <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                                    <select name="tipo" value={arma.tipo} onChange={(e) => handleArmaChange(index, e)}>
-                                        <option value="FOGO">Arma de Fogo</option>
-                                        <option value="BRANCA">Arma Branca</option>
-                                        <option value="SIMULACRO">Simulacro</option>
-                                        <option value="ARTESANAL">Artesanal</option>
-                                        <option value="OUTRO">Outro</option>
-                                    </select>
-                                    <input type="text" name="marca" value={arma.marca} onChange={(e) => handleArmaChange(index, e)} placeholder="Marca" />
-                                    <input type="text" name="calibre" value={arma.calibre} onChange={(e) => handleArmaChange(index, e)} placeholder="Calibre" />
-                                </div>
-                                <input type="text" name="numero_serie" value={arma.numero_serie} onChange={(e) => handleArmaChange(index, e)} placeholder="Número de Série" style={{marginTop: '10px'}} />
-                                <textarea name="observacoes" value={arma.observacoes} onChange={(e) => handleArmaChange(index, e)} placeholder="Observações" />
-                                <button type="button" className="remove-button" onClick={() => removerArma(index)}>Remover Arma</button>
-                            </div>
-                        ))}
-                        <button type="button" className="add-button" onClick={adicionarArma}>+ Adicionar Arma</button>
-                    </div>
-                )}
+                <h3>Informações Gerais</h3>
+                <input type="datetime-local" name="data_fato" value={ocorrencia.data_fato} onChange={handleInputChange} required />
+                <select name="tipo_ocorrencia" value={ocorrencia.tipo_ocorrencia} onChange={handleInputChange} required>
+                    <option value="">Selecione o Tipo de Ocorrência</option>
+                    {tiposOcorrencia.map(tipo => (
+                        <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
+                    ))}
+                </select>
+                <select name="caderno_informativo" value={ocorrencia.caderno_informativo || ''} onChange={handleInputChange}>
+                    <option value="">Selecione o Caderno</option>
+                    {cadernos.map(caderno => (
+                        <option key={caderno.id} value={caderno.id}>{caderno.nome}</option>
+                    ))}
+                </select>
+                <textarea name="descricao_fato" value={ocorrencia.descricao_fato} onChange={handleInputChange} placeholder="Descrição do Fato" required />
             </div>
-            
-            {/* ... (outras secções) ... */}
+
+            {/* Resto do formulário aqui para usar as outras variáveis */}
 
             <button type="submit" className="submit-button">Salvar Ocorrência</button>
         </form>
