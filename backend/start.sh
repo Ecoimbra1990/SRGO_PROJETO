@@ -2,19 +2,21 @@
 # exit on error
 set -o errexit
 
+# Adicionado para garantir que nenhum arquivo compilado antigo seja usado
+echo "--- Limpando arquivos .pyc antigos ---"
+find . -type f -name "*.pyc" -delete
+
+# Instala as dependências
+echo "--- Instalando dependências ---"
 pip install -r requirements.txt
+
+# Executa os comandos de gerenciamento do Django
+echo "--- Executando comandos do Django ---"
 python manage.py collectstatic --no-input
-
-# Executa as migrações. Com uma base de dados nova,
-# este comando irá criar todas as tabelas do zero.
 python manage.py migrate
-
-# Cria o superusuário (se não existir)
 python manage.py create_initial_superuser
-
-# Popula a tabela Efetivo a partir do Google Sheets
 python manage.py populate_efetivo
 
-# Inicia o servidor web
+# Inicia o servidor
+echo "--- Iniciando o servidor Gunicorn ---"
 gunicorn srgo.wsgi:application --bind 0.0.0.0:$PORT
-
