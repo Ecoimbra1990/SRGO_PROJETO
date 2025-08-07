@@ -1,24 +1,15 @@
-# backend/ocorrencias/urls.py
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    OcorrenciaViewSet, 
-    UserCreate, 
-    OrganizacaoCriminosaViewSet, 
-    TipoOcorrenciaViewSet,
-    CadernoInformativoViewSet,
-    OPMViewSet # Importe a OPMViewSet
-)
+from .views import *
 
 router = DefaultRouter()
-router.register(r'ocorrencias', OcorrenciaViewSet)
-router.register(r'organizacoes', OrganizacaoCriminosaViewSet)
-router.register(r'tipos-ocorrencia', TipoOcorrenciaViewSet)
-router.register(r'cadernos', CadernoInformativoViewSet)
-router.register(r'opms', OPMViewSet) # Adicione o registro da rota
+router.register(r'ocorrencias', OcorrenciaViewSet, basename='ocorrencia')
+router.register(r'organizacoes', OrganizacaoCriminosaViewSet, basename='organizacao')
+router.register(r'tipos-ocorrencia', TipoOcorrenciaViewSet, basename='tipoocorrencia')
+router.register(r'cadernos', CadernoInformativoViewSet, basename='caderno')
+router.register(r'opms', OPMViewSet, basename='opm')
+router.register(r'modelos-arma', ModeloArmaViewSet, basename='modeloarma') # <-- Adicionar esta linha
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('register/', UserCreate.as_view(), name='user_create'),
 ]
