@@ -6,7 +6,7 @@ from .views import (
     OrganizacaoCriminosaViewSet, 
     TipoOcorrenciaViewSet,
     CadernoInformativoViewSet,
-    OPMViewSet # 1. Importe a OPMViewSet
+    OPMViewSet # Importe a OPMViewSet
 )
 
 router = DefaultRouter()
@@ -14,7 +14,7 @@ router.register(r'ocorrencias', OcorrenciaViewSet)
 router.register(r'organizacoes', OrganizacaoCriminosaViewSet)
 router.register(r'tipos-ocorrencia', TipoOcorrenciaViewSet)
 router.register(r'cadernos', CadernoInformativoViewSet)
-router.register(r'opms', OPMViewSet) # 2. Adicione esta linha para registrar a rota
+router.register(r'opms', OPMViewSet) # Adicione o registro da rota
 
 urlpatterns = [
     path('', include(router.urls)),
