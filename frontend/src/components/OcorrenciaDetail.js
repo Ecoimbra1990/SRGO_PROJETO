@@ -50,6 +50,23 @@ const OcorrenciaDetail = ({ ocorrenciaId }) => {
                 <p><strong>Coordenadas:</strong> Lat: {ocorrencia.latitude}, Lon: {ocorrencia.longitude}</p>
             </div>
 
+            {/* NOVO: Card para Armas Apreendidas */}
+            {ocorrencia.armas_apreendidas && ocorrencia.armas_apreendidas.length > 0 && (
+                <div className="detail-card">
+                    <h3>Armas Apreendidas</h3>
+                    {ocorrencia.armas_apreendidas.map((arma, index) => (
+                        <div key={index} className="arma-card">
+                            <p><strong>Modelo:</strong> {arma.modelo}</p>
+                            <p><strong>Tipo:</strong> {arma.tipo}</p>
+                            <p><strong>Marca:</strong> {arma.marca || 'N/A'}</p>
+                            <p><strong>Calibre:</strong> {arma.calibre || 'N/A'}</p>
+                            <p><strong>Nº de Série:</strong> {arma.numero_serie || 'N/A'}</p>
+                            <p><strong>Observações:</strong> {arma.observacoes || 'Nenhuma'}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <div className="detail-card">
                 <h3>Pessoas Envolvidas</h3>
                 {ocorrencia.envolvidos?.length > 0 ? (
