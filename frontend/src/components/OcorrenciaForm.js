@@ -99,10 +99,23 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const handleArmaChange = (index, e) => {
         const { name, value } = e.target;
         const novasArmas = [...ocorrencia.armas_apreendidas];
-        novasArmas[index][name] = value;
+        const armaAtual = { ...novasArmas[index] };
+
+        const upperValue = (name === 'modelo' || name === 'marca' || name === 'calibre' || name === 'numero_serie')
+            ? value.toUpperCase()
+            : value;
+
+        armaAtual[name] = upperValue;
+
+        if (['modelo', 'marca', 'calibre', 'tipo'].includes(name) && armaAtual.modelo_catalogado) {
+            armaAtual.modelo_catalogado = null;
+        }
+        
+        novasArmas[index] = armaAtual;
         setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas }));
+        
         if (name === 'modelo') {
-            setArmaSearchTerm(value);
+            setArmaSearchTerm(upperValue);
             setActiveSuggestionIndex(index);
         }
     };
@@ -161,7 +174,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     };
     
-    // ... (outros handlers como handleCepBlur, handleSuggestionClick, etc.)
+    // ... (outros handlers)
 
     if (loading) {
         return <p>Carregando formulário...</p>;
@@ -171,20 +184,10 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
             <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
 
-            {/* Secção de Informações Gerais */}
+            {/* Secções existentes */}
+            
             <div className="form-section">
-                <h3>Informações Gerais</h3>
-                {/* ... (campos de data, tipo, caderno, etc.) ... */}
-            </div>
-
-            {/* Secção de Localização */}
-            <div className="form-section">
-                <h3>Localização</h3>
-                {/* ... (campos de UF, cidade, logradouro, CEP, lat/lon, etc.) ... */}
-            </div>
-
-            {/* Secção de Armas Condicional */}
-            <div className="form-section">
+                <h3>Armas Apreendidas</h3>
                 <div className="toggle-section">
                     <label htmlFor="toggle-armas">Houve apreensão de armas?</label>
                     <input 
@@ -197,7 +200,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
 
                 {mostrarSecaoArmas && (
                     <div className="conditional-content">
-                        <h3>Armas Apreendidas</h3>
                         {ocorrencia.armas_apreendidas.map((arma, index) => (
                             <div key={index} className="dynamic-list-item">
                                 <div className="autocomplete-container">
@@ -232,12 +234,8 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                     </div>
                 )}
             </div>
-
-            {/* Secção de Pessoas Envolvidas */}
-            <div className="form-section">
-                <h3>Pessoas Envolvidas</h3>
-                {/* ... (código para adicionar/remover pessoas) ... */}
-            </div>
+            
+            {/* ... (outras secções) ... */}
 
             <button type="submit" className="submit-button">Salvar Ocorrência</button>
         </form>
