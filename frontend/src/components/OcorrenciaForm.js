@@ -106,7 +106,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
 
     // Efeito para buscar modelos de arma
     useEffect(() => {
-        if (armaSearchTerm.length < 2) {
+        if (armaSearchTerm.length < 2 || activeSuggestionIndex === null) {
             setArmaSuggestions([]);
             return;
         }
@@ -120,7 +120,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
             }
         }, 300);
         return () => clearTimeout(handler);
-    }, [armaSearchTerm]);
+    }, [armaSearchTerm, activeSuggestionIndex]);
 
     const fetchCoordinates = async (address) => {
         try {
