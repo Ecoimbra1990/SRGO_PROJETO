@@ -45,5 +45,6 @@ export const getTiposOcorrencia = () => api.get('/api/tipos-ocorrencia/');
 export const getCadernos = () => api.get('/api/cadernos/');
 export const getOPMs = () => api.get('/api/opms/');
 export const getModelosArma = (search = '') => api.get(`/api/modelos-arma/?search=${search}`);
-
+// Adicione esta função ao ficheiro api.js
+export const getLocalidadePorNome = (search = '') => api.get(`/api/localidades/?search=${search}`);
 export default api;
