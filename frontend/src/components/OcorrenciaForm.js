@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// A importação 'useNavigate' foi removida pois não era utilizada.
 import api, { getOPMs, getTiposOcorrencia, getOrganizacoes } from '../api';
 import './OcorrenciaForm.css';
 
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
-    const navigate = useNavigate();
+    // A linha 'const navigate = useNavigate();' foi removida daqui.
     const [ocorrencia, setOcorrencia] = useState({
         tipo_ocorrencia: '',
         data_fato: '',
