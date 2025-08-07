@@ -6,6 +6,29 @@ class OPMSerializer(serializers.ModelSerializer):
     class Meta:
         model = OPM
         fields = ['id', 'nome']
+# Adicione estas classes ao serializers.py, pode ser a seguir ao OPMSerializer
+
+class RISPSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RISP
+        fields = ['id', 'nome', 'coordenadoria']
+
+class AISPSerializer(serializers.ModelSerializer):
+    risp = RISPSerializer(read_only=True)
+    class Meta:
+        model = AISP
+        fields = ['id', 'nome', 'risp']
+
+class LocalidadeSerializer(serializers.ModelSerializer):
+    # Para mostrar os nomes em vez de apenas os IDs
+    opm_nome = serializers.CharField(source='opm.nome', read_only=True)
+    aisp_nome = serializers.CharField(source='opm.aisp.nome', read_only=True)
+    risp_nome = serializers.CharField(source='opm.aisp.risp.nome', read_only=True)
+
+    class Meta:
+        model = Localidade
+        # Incluímos o id da opm para poder ser usado no formulário
+        fields = ['id', 'municipio_bairro', 'opm', 'opm_nome', 'aisp_nome', 'risp_nome']
 
 class OrganizacaoCriminosaSerializer(serializers.ModelSerializer):
     class Meta:
