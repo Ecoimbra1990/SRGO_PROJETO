@@ -3,7 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# ... (RISP, AISP, OPM, Localidade, Efetivo, etc. - sem alterações)
+# Modelos de Área Geográfica e Organizacional
 class RISP(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     coordenadoria = models.CharField(max_length=255, blank=True, verbose_name="COORPIN")
@@ -24,6 +24,7 @@ class Localidade(models.Model):
     opm = models.ForeignKey('OPM', on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self): return self.municipio_bairro
 
+# Modelos Principais
 class Efetivo(models.Model):
     nome = models.CharField(max_length=255)
     matricula = models.CharField(max_length=30, unique=True)
@@ -69,18 +70,16 @@ class Ocorrencia(models.Model):
         return f"{self.tipo_ocorrencia.nome if self.tipo_ocorrencia else 'N/A'} - {self.data_fato.strftime('%d/%m/%Y')}"
 
 class PessoaEnvolvida(models.Model):
-    TIPO_ENVOLVIMENTO_CHOICES = [('VITIMA', 'Vítima'), ('TESTEMUNHA', 'Testemunha'), ('SUSPEITO', 'Suspeito'), ('AUTOR', 'Autor'), ('OUTRO', 'Outro')]
+    TIPO_ENVOLVimento_CHOICES = [('VITIMA', 'Vítima'), ('TESTEMUNHA', 'Testemunha'), ('SUSPEITO', 'Suspeito'), ('AUTOR', 'Autor'), ('OUTRO', 'Outro')]
     STATUS_CHOICES = [('MORTO', 'Morto'), ('FERIDO', 'Ferido'), ('CAPTURADO', 'Capturado'), ('ILESO', 'Ileso'), ('NAO_APLICAVEL', 'Não Aplicável')]
     DOCUMENTO_CHOICES = [('CPF', 'CPF'), ('RG', 'RG'), ('OUTRO', 'Outro')]
     
     ocorrencia = models.ForeignKey('Ocorrencia', related_name='envolvidos', on_delete=models.CASCADE)
     nome = models.CharField(max_length=255)
-    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NAO_APLICAVEL', blank=True, null=True)
     tipo_documento = models.CharField(max_length=10, choices=DOCUMENTO_CHOICES, blank=True, null=True)
-    
     documento = models.CharField(max_length=50, blank=True, null=True, verbose_name="Número do Documento")
-    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVIMENTO_CHOICES)
+    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVimento_CHOICES)
     observacoes = models.TextField(blank=True, null=True)
     organizacao_criminosa = models.ForeignKey('OrganizacaoCriminosa', on_delete=models.SET_NULL, null=True, blank=True, related_name='membros')
     
@@ -93,4 +92,41 @@ class ProcedimentoPenal(models.Model):
     vara_tribunal = models.CharField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_INVESTIGACAO')
     detalhes = models.TextField(blank=True, null=True)
-    def __str__(self): return f"Processo {self
+    def __str__(self): return f"Processo {self.numero_processo or 'N/A'}"
+
+class ModeloArma(models.Model):
+    TIPO_CHOICES = [('FOGO', 'Arma de Fogo'), ('BRANCA', 'Arma Branca'), ('SIMULACRO', 'Simulacro'), ('ARTESANAL', 'Artesanal'), ('OUTRO', 'Outro')]
+    ESPECIE_CHOICES = [
+        ('PISTOLA', 'Pistola'),
+        ('REVOLVER', 'Revólver'),
+        ('FUZIL', 'Fuzil'),
+        ('ESPINGARDA', 'Espingarda'),
+        ('METRALHADORA', 'Metralhadora'),
+        ('SUBMETRALHADORA', 'Submetralhadora'),
+        ('GRANADA', 'Granada'),
+        ('EXPLOSIVO', 'Outros Explosivos'),
+        ('NAO_DEFINIDA', 'Não Definida'),
+    ]
+
+    modelo = models.CharField(max_length=100, unique=True, help_text="Ex: Taurus G2C, IMBEL MD2")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='FOGO')
+    especie = models.CharField(max_length=20, choices=ESPECIE_CHOICES, default='NAO_DEFINIDA', verbose_name="Espécie da Arma")
+    marca = models.CharField(max_length=100, blank=True, help_text="Ex: Taurus, Glock, IMBEL")
+    calibre = models.CharField(max_length=50, blank=True, help_text="Ex: 9mm, .40, .380")
+    
+    def __str__(self): return self.modelo
+
+class ArmaApreendida(models.Model):
+    ocorrencia = models.ForeignKey('Ocorrencia', related_name='armas_apreendidas', on_delete=models.CASCADE)
+    modelo_catalogado = models.ForeignKey('ModeloArma', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Modelo (do Catálogo)")
+    
+    # Estes campos são preenchidos manualmente para armas novas ou automaticamente para as do catálogo
+    tipo = models.CharField(max_length=100, help_text="Ex: Arma de Fogo, Arma Branca...")
+    marca = models.CharField(max_length=100, blank=True)
+    modelo = models.CharField(max_length=100)
+    calibre = models.CharField(max_length=50, blank=True)
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de Série")
+    observacoes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.modelo} ({self.numero_serie or 'S/N'}) - Ocorrência {self.ocorrencia.id}"
