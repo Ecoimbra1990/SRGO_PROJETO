@@ -1,3 +1,5 @@
+from .models import Localidade
+from .serializers import LocalidadeSerializer
 from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Ocorrencia, OrganizacaoCriminosa, TipoOcorrencia, CadernoInformativo, OPM, ModeloArma
@@ -52,3 +54,11 @@ class ModeloArmaViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['modelo', 'marca', 'calibre']
+# Adicione esta ViewSet ao ficheiro
+class LocalidadeViewSet(viewsets.ModelViewSet):
+    queryset = Localidade.objects.all()
+    serializer_class = LocalidadeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    # Campo que será usado para a pesquisa
+    search_fields = ['municipio_bairro']
