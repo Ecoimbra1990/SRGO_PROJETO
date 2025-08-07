@@ -1,3 +1,5 @@
+# backend/ocorrencias/serializers.py
+
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
@@ -6,8 +8,8 @@ class OPMSerializer(serializers.ModelSerializer):
     class Meta:
         model = OPM
         fields = ['id', 'nome']
-# Adicione estas classes ao serializers.py, pode ser a seguir ao OPMSerializer
 
+# Serializers para os novos modelos de área
 class RISPSerializer(serializers.ModelSerializer):
     class Meta:
         model = RISP
@@ -20,15 +22,13 @@ class AISPSerializer(serializers.ModelSerializer):
         fields = ['id', 'nome', 'risp']
 
 class LocalidadeSerializer(serializers.ModelSerializer):
-    # Para mostrar os nomes em vez de apenas os IDs
     opm_nome = serializers.CharField(source='opm.nome', read_only=True)
     aisp_nome = serializers.CharField(source='opm.aisp.nome', read_only=True)
     risp_nome = serializers.CharField(source='opm.aisp.risp.nome', read_only=True)
-
     class Meta:
         model = Localidade
-        # Incluímos o id da opm para poder ser usado no formulário
         fields = ['id', 'municipio_bairro', 'opm', 'opm_nome', 'aisp_nome', 'risp_nome']
+
 
 class OrganizacaoCriminosaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,16 +57,23 @@ class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PessoaEnvolvida
-        fields = ['id', 'nome', 'documento', 'tipo_envolvimento', 'observacoes', 'organizacao_criminosa', 'organizacao_criminosa_nome', 'procedimentos']
+        # --- CAMPOS ATUALIZADOS ---
+        fields = [
+            'id', 'nome', 'status', 'tipo_documento', 'documento', 
+            'tipo_envolvimento', 'observacoes', 'organizacao_criminosa', 
+            'organizacao_criminosa_nome', 'procedimentos'
+        ]
 
 class ModeloArmaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModeloArma
-        fields = ['id', 'modelo', 'tipo', 'marca', 'calibre']
+        # --- CAMPO 'especie' ADICIONADO ---
+        fields = ['id', 'modelo', 'tipo', 'especie', 'marca', 'calibre']
 
 class ArmaApreendidaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ArmaApreendida
+        # --- O campo 'especie' foi removido daqui pois agora pertence ao ModeloArma ---
         fields = ['id', 'tipo', 'marca', 'modelo', 'calibre', 'numero_serie', 'observacoes', 'modelo_catalogado']
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
@@ -99,10 +106,10 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         read_only_fields = ['usuario_registro']
 
     def get_usuario_registro_nome_completo(self, obj):
+        # ... (sem alterações aqui)
         if obj.usuario_registro:
             full_name = obj.usuario_registro.get_full_name()
-            if full_name:
-                return full_name
+            if full_name: return full_name
             try:
                 efetivo = Efetivo.objects.get(matricula=obj.usuario_registro.username)
                 return efetivo.nome
@@ -111,24 +118,25 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         return None
 
     def _handle_armas(self, ocorrencia, armas_data):
-        """
-        Lida com o registo de armas e aprende novos modelos para o catálogo.
-        """
         for arma_data in armas_data:
             # Se a arma foi inserida manualmente (sem link para o catálogo)
             if not arma_data.get('modelo_catalogado'):
-                # Verifica se o modelo já existe no catálogo ou cria um novo.
-                # O .upper() garante a padronização para evitar duplicados.
+                # --- LÓGICA ATUALIZADA ---
+                # Cria ou atualiza o modelo de arma no catálogo
                 modelo_obj, created = ModeloArma.objects.get_or_create(
                     modelo=arma_data['modelo'].upper(),
                     defaults={
                         'marca': arma_data.get('marca', '').upper(),
                         'calibre': arma_data.get('calibre', '').upper(),
-                        'tipo': arma_data.get('tipo', 'FOGO')
+                        'tipo': arma_data.get('tipo', 'FOGO'),
+                        # Adiciona a espécie ao criar um novo modelo
+                        'especie': arma_data.get('especie', 'NAO_DEFINIDA') 
                     }
                 )
-                # Associa a arma apreendida ao item do catálogo (existente ou novo)
                 arma_data['modelo_catalogado'] = modelo_obj
+            
+            # Remove o campo 'especie' antes de criar a ArmaApreendida, pois ele não pertence a este modelo
+            arma_data.pop('especie', None)
             
             ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
 
@@ -147,21 +155,19 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         envolvidos_data = validated_data.pop('envolvidos', [])
         armas_data = validated_data.pop('armas_apreendidas', [])
-        
         instance = super().update(instance, validated_data)
         
-        # Atualiza Pessoas Envolvidas
         instance.envolvidos.all().delete()
         for envolvido_data in envolvidos_data:
             PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
 
-        # Atualiza Armas Apreendidas
         instance.armas_apreendidas.all().delete()
         self._handle_armas(instance, armas_data)
             
         return instance
 
 class UserRegistrationSerializer(serializers.Serializer):
+    # ... (sem alterações aqui)
     matricula = serializers.CharField(max_length=20)
     password = serializers.CharField(write_only=True)
 
