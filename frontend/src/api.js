@@ -1,3 +1,5 @@
+// frontend/src/api.js
+
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
@@ -10,13 +12,12 @@ api.interceptors.request.use(async config => {
     return config;
 }, error => Promise.reject(error));
 
-// Auth
+// Autenticação
 export const loginUser = (credentials) => api.post('/token/', credentials);
 export const registerUser = (userData) => api.post('/register/', userData);
 
 // Ocorrências
 export const getOcorrencias = (filters = {}) => {
-    // Constrói os parâmetros da query string a partir do objeto de filtros
     const params = new URLSearchParams();
     if (filters.id) params.append('id', filters.id);
     if (filters.opm_area) params.append('opm_area', filters.opm_area);
@@ -32,12 +33,10 @@ export const createOcorrencia = (ocorrencia) => api.post('/ocorrencias/', ocorre
 export const updateOcorrencia = (id, ocorrencia) => api.put(`/ocorrencias/${id}/`, ocorrencia);
 export const deleteOcorrencia = (id) => api.delete(`/ocorrencias/${id}/`);
 
-// Lookups
+// Lookups (dados de apoio)
 export const getOrganizacoes = () => api.get('/organizacoes/');
 export const getTiposOcorrencia = () => api.get('/tipos-ocorrencia/');
-export const createTipoOcorrencia = (tipo) => api.post('/tipos-ocorrencia/', tipo);
 export const getCadernos = () => api.get('/cadernos/');
-export const createCaderno = (caderno) => api.post('/cadernos/', caderno);
-export const getOPMs = () => api.get('/opms/');
+export const getOPMs = () => api.get('/opms/'); // <-- Adicionado
 
 export default api;
