@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+// CORREÇÃO: A URL base deve apontar para a raiz do seu backend, sem o /api.
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://srgo-backend.onrender.com';
 
 const api = axios.create({ baseURL: API_BASE_URL });
 
@@ -13,6 +14,7 @@ api.interceptors.request.use(async config => {
 }, error => Promise.reject(error));
 
 // --- Auth ---
+// Agora os caminhos estão corretos, pois serão combinados com a URL base.
 export const loginUser = (credentials) => api.post('/api/token/', credentials);
 export const registerUser = (userData) => api.post('/api/register/', userData);
 
