@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api, { getOPMs, getTiposOcorrencia, getOrganizacoes } from '../api';
+import api, { getOPMs, getTiposOcorrencia, getOrganizacoes, getCadernos } from '../api';
 import './OcorrenciaForm.css';
 
 // Define o estado inicial para uma ocorrência vazia
@@ -25,22 +25,27 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
 
+    // Estados para os dados dos dropdowns
     const [opms, setOpms] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
     const [organizacoes, setOrganizacoes] = useState([]);
+    const [cadernos, setCadernos] = useState([]); // <-- Estado para os cadernos
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [opmsRes, tiposRes, orgsRes] = await Promise.all([
+                // Adiciona getCadernos() à lista de chamadas da API
+                const [opmsRes, tiposRes, orgsRes, cadernosRes] = await Promise.all([
                     getOPMs(),
                     getTiposOcorrencia(),
-                    getOrganizacoes()
+                    getOrganizacoes(),
+                    getCadernos() // <-- Busca os dados dos cadernos
                 ]);
                 setOpms(opmsRes.data || []);
                 setTiposOcorrencia(tiposRes.data || []);
                 setOrganizacoes(orgsRes.data || []);
+                setCadernos(cadernosRes.data || []); // <-- Armazena os dados dos cadernos
             } catch (error) {
                 console.error('Erro ao carregar dados para o formulário:', error);
             } finally {
@@ -49,17 +54,15 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         };
         fetchData();
 
-        // Lógica corrigida para lidar com edição e criação
+        // Lógica para lidar com edição e criação
         if (existingOcorrencia && existingOcorrencia.id) {
-            // Se está editando, mescla os dados existentes com o estado inicial
             setOcorrencia({
                 ...initialOcorrenciaState,
                 ...existingOcorrencia,
                 data_fato: existingOcorrencia.data_fato ? new Date(existingOcorrencia.data_fato).toISOString().slice(0, 16) : '',
-                envolvidos: existingOcorrencia.envolvidos || [] // Garante que 'envolvidos' seja um array
+                envolvidos: existingOcorrencia.envolvidos || []
             });
         } else {
-            // Se é uma nova ocorrência, reseta para o estado inicial
             setOcorrencia(initialOcorrenciaState);
         }
     }, [existingOcorrencia]);
@@ -114,7 +117,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         e.preventDefault();
         try {
             const payload = { ...ocorrencia };
-            // Garante que campos de ID vazios sejam enviados como null
             if (!payload.opm_area) payload.opm_area = null;
             if (!payload.caderno_informativo) payload.caderno_informativo = null;
 
@@ -144,6 +146,13 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                     <option value="">Selecione o Tipo de Ocorrência</option>
                     {tiposOcorrencia.map(tipo => (
                         <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
+                    ))}
+                </select>
+                {/* <-- Dropdown do Caderno Informativo adicionado aqui --> */}
+                <select name="caderno_informativo" value={ocorrencia.caderno_informativo || ''} onChange={handleInputChange}>
+                    <option value="">Selecione o Caderno</option>
+                    {cadernos.map(caderno => (
+                        <option key={caderno.id} value={caderno.id}>{caderno.nome}</option>
                     ))}
                 </select>
                 <textarea name="descricao_fato" value={ocorrencia.descricao_fato} onChange={handleInputChange} placeholder="Descrição do Fato" required />
