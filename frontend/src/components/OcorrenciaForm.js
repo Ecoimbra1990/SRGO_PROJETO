@@ -2,23 +2,28 @@ import React, { useState, useEffect } from 'react';
 import api, { getOPMs, getTiposOcorrencia, getOrganizacoes } from '../api';
 import './OcorrenciaForm.css';
 
+// Define o estado inicial para uma ocorrência vazia
+const initialOcorrenciaState = {
+    tipo_ocorrencia: '',
+    data_fato: '',
+    descricao_fato: '',
+    fonte_informacao: '',
+    evolucao_ocorrencia: '',
+    cep: '',
+    logradouro: '',
+    bairro: '',
+    cidade: '',
+    uf: '',
+    latitude: '',
+    longitude: '',
+    opm_area: '',
+    caderno_informativo: '',
+    envolvidos: [] // Garante que 'envolvidos' seja sempre um array
+};
+
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [loading, setLoading] = useState(true);
-    const [ocorrencia, setOcorrencia] = useState({
-        tipo_ocorrencia: '',
-        data_fato: '',
-        descricao_fato: '',
-        fonte_informacao: '',
-        evolucao_ocorrencia: '',
-        cep: '',
-        logradouro: '',
-        bairro: '',
-        cidade: '',
-        uf: '',
-        latitude: '',
-        longitude: '',
-        envolvidos: []
-    });
+    const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
 
     const [opms, setOpms] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
@@ -33,9 +38,9 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                     getTiposOcorrencia(),
                     getOrganizacoes()
                 ]);
-                setOpms(opmsRes.data);
-                setTiposOcorrencia(tiposRes.data);
-                setOrganizacoes(orgsRes.data);
+                setOpms(opmsRes.data || []);
+                setTiposOcorrencia(tiposRes.data || []);
+                setOrganizacoes(orgsRes.data || []);
             } catch (error) {
                 console.error('Erro ao carregar dados para o formulário:', error);
             } finally {
@@ -44,11 +49,18 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         };
         fetchData();
 
-        if (existingOcorrencia) {
+        // Lógica corrigida para lidar com edição e criação
+        if (existingOcorrencia && existingOcorrencia.id) {
+            // Se está editando, mescla os dados existentes com o estado inicial
             setOcorrencia({
+                ...initialOcorrenciaState,
                 ...existingOcorrencia,
-                data_fato: existingOcorrencia.data_fato ? new Date(existingOcorrencia.data_fato).toISOString().slice(0, 16) : ''
+                data_fato: existingOcorrencia.data_fato ? new Date(existingOcorrencia.data_fato).toISOString().slice(0, 16) : '',
+                envolvidos: existingOcorrencia.envolvidos || [] // Garante que 'envolvidos' seja um array
             });
+        } else {
+            // Se é uma nova ocorrência, reseta para o estado inicial
+            setOcorrencia(initialOcorrenciaState);
         }
     }, [existingOcorrencia]);
 
@@ -98,14 +110,18 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     };
 
-    // ****** FUNÇÃO QUE FALTAVA ******
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (ocorrencia.id) {
-                await api.put(`/ocorrencias/${ocorrencia.id}/`, ocorrencia);
+            const payload = { ...ocorrencia };
+            // Garante que campos de ID vazios sejam enviados como null
+            if (!payload.opm_area) payload.opm_area = null;
+            if (!payload.caderno_informativo) payload.caderno_informativo = null;
+
+            if (payload.id) {
+                await api.put(`/api/ocorrencias/${payload.id}/`, payload);
             } else {
-                await api.post('/ocorrencias/', ocorrencia);
+                await api.post('/api/ocorrencias/', payload);
             }
             onSuccess();
         } catch (error) {
@@ -142,7 +158,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                 <input type="text" name="bairro" value={ocorrencia.bairro} onChange={handleInputChange} placeholder="Bairro" />
                 <input type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
                 <input type="text" name="uf" value={ocorrencia.uf} onChange={handleInputChange} placeholder="UF" />
-                 <select name="opm_area" value={ocorrencia.opm_area} onChange={handleInputChange}>
+                 <select name="opm_area" value={ocorrencia.opm_area || ''} onChange={handleInputChange}>
                     <option value="">Selecione a OPM da Área</option>
                     {opms.map(opm => (
                         <option key={opm.id} value={opm.id}>{opm.nome}</option>
