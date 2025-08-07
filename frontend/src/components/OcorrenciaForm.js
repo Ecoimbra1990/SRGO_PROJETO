@@ -40,7 +40,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [cadernos, setCadernos] = useState([]);
     
     // Estados para as funcionalidades de autocompletar e sugestões
-    const [addressSuggestions, setAddressSuggestions] = useState([]);
     const [mostrarSecaoArmas, setMostrarSecaoArmas] = useState(false);
     const [armaSearchTerm, setArmaSearchTerm] = useState('');
     const [armaSuggestions, setArmaSuggestions] = useState([]);
@@ -134,7 +133,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         return () => clearTimeout(handler);
     }, [armaSearchTerm, activeSuggestionIndex]);
     
-    // Função para buscar coordenadas (mantida aqui, pode ser adaptada para Google Maps ou outro)
+    // Função para buscar coordenadas
     const fetchCoordinates = async (address) => {
         const apiKey = process.env.REACT_APP_Maps_API_KEY;
         if (!apiKey) {
@@ -179,7 +178,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     };
     
-    // ... (restante das funções: handleEnvolvidoChange, adicionarEnvolvido, etc.)
     const handleEnvolvidoChange = (index, e) => {
         const { name, value } = e.target;
         const novosEnvolvidos = [...ocorrencia.envolvidos];
@@ -275,7 +273,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
             <div className="form-section">
                 <h3>Informações Gerais</h3>
                 <input type="datetime-local" name="data_fato" value={ocorrencia.data_fato} onChange={handleInputChange} required />
-                <select name="tipo_ocorrencia" value={ocorrencia.tipo_ocorrencia} onChange={handleInputChange} required>
+                <select name="tipo_ocorrencia" value={ocorrencia.tipo_ocorrencia || ''} onChange={handleInputChange} required>
                     <option value="">Selecione o Tipo de Ocorrência</option>
                     {tiposOcorrencia.map(tipo => (<option key={tipo.id} value={tipo.id}>{tipo.nome}</option>))}
                 </select>
@@ -335,3 +333,56 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                                                     <strong>{sug.modelo}</strong> ({sug.marca || 'N/A'} - {sug.calibre || 'N/A'})
                                                 </li>
                                             ))}
+                                        </ul>
+                                    )}
+                                </div>
+                                <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                                    <select name="tipo" value={arma.tipo} onChange={(e) => handleArmaChange(index, e)}>
+                                        <option value="FOGO">Arma de Fogo</option>
+                                        <option value="BRANCA">Arma Branca</option>
+                                        <option value="SIMULACRO">Simulacro</option>
+                                        <option value="ARTESANAL">Artesanal</option>
+                                        <option value="OUTRO">Outro</option>
+                                    </select>
+                                    <input type="text" name="marca" value={arma.marca} onChange={(e) => handleArmaChange(index, e)} placeholder="Marca" />
+                                    <input type="text" name="calibre" value={arma.calibre} onChange={(e) => handleArmaChange(index, e)} placeholder="Calibre" />
+                                </div>
+                                <input type="text" name="numero_serie" value={arma.numero_serie} onChange={(e) => handleArmaChange(index, e)} placeholder="Número de Série" style={{marginTop: '10px'}} />
+                                <textarea name="observacoes" value={arma.observacoes} onChange={(e) => handleArmaChange(index, e)} placeholder="Observações" />
+                                <button type="button" className="remove-button" onClick={() => removerArma(index)}>Remover Arma</button>
+                            </div>
+                        ))}
+                        <button type="button" className="add-button" onClick={adicionarArma}>+ Adicionar Arma</button>
+                    </div>
+                )}
+            </div>
+
+            <div className="form-section">
+                <h3>Pessoas Envolvidas</h3>
+                {ocorrencia.envolvidos.map((envolvido, index) => (
+                    <div key={index} className="dynamic-list-item">
+                        <input type="text" name="nome" value={envolvido.nome} onChange={(e) => handleEnvolvidoChange(index, e)} placeholder="Nome Completo" required />
+                        <select name="tipo_envolvimento" value={envolvido.tipo_envolvimento} onChange={(e) => handleEnvolvidoChange(index, e)}>
+                            <option value="SUSPEITO">Suspeito</option>
+                            <option value="VITIMA">Vítima</option>
+                            <option value="TESTEMUNHA">Testemunha</option>
+                            <option value="AUTOR">Autor</option>
+                            <option value="OUTRO">Outro</option>
+                        </select>
+                         <select name="organizacao_criminosa" value={envolvido.organizacao_criminosa || ''} onChange={(e) => handleEnvolvidoChange(index, e)}>
+                            <option value="">Nenhuma Organização</option>
+                            {organizacoes.map(org => (<option key={org.id} value={org.id}>{org.nome}</option>))}
+                        </select>
+                        <textarea name="observacoes" value={envolvido.observacoes} onChange={(e) => handleEnvolvidoChange(index, e)} placeholder="Observações" />
+                        <button type="button" className="remove-button" onClick={() => removerEnvolvido(index)}>Remover</button>
+                    </div>
+                ))}
+                <button type="button" className="add-button" onClick={adicionarEnvolvido}>+ Adicionar Pessoa</button>
+            </div>
+
+            <button type="submit" className="submit-button">Salvar Ocorrência</button>
+        </form>
+    );
+};
+
+export default OcorrenciaForm;
