@@ -1,10 +1,13 @@
 # backend/srgo/urls.py
 
+from django.contrib import admin # Adicione esta linha
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import UserCreate # Importa a view de registro do local correto
+from .views import UserCreate
 
 urlpatterns = [
+    path('admin/', admin.site.urls), # Adicione esta linha para a rota do admin
+    
     # Rotas de Autenticação e Registro
     path('api/register/', UserCreate.as_view(), name='user_create'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
