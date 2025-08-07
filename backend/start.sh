@@ -13,8 +13,8 @@ python manage.py migrate
 # Comentá-los evita problemas de timeout durante o deploy.
 # python manage.py create_initial_superuser
 # python manage.py populate_efetivo
- python manage.py populate_armas
- python manage.py populate_areas
+# python manage.py populate_armas
+# python manage.py populate_areas
 
 # Inicia o servidor web
 gunicorn srgo.wsgi:application --bind 0.0.0.0:$PORT
