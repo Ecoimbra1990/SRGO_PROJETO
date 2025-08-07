@@ -18,7 +18,7 @@ const initialOcorrenciaState = {
     longitude: '',
     opm_area: '',
     caderno_informativo: '',
-    envolvidos: [] // Garante que 'envolvidos' seja sempre um array
+    envolvidos: []
 };
 
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
@@ -29,23 +29,24 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [opms, setOpms] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
     const [organizacoes, setOrganizacoes] = useState([]);
-    const [cadernos, setCadernos] = useState([]); // <-- Estado para os cadernos
+    const [cadernos, setCadernos] = useState([]);
+    
+    const [addressSuggestions, setAddressSuggestions] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Adiciona getCadernos() à lista de chamadas da API
                 const [opmsRes, tiposRes, orgsRes, cadernosRes] = await Promise.all([
                     getOPMs(),
                     getTiposOcorrencia(),
                     getOrganizacoes(),
-                    getCadernos() // <-- Busca os dados dos cadernos
+                    getCadernos()
                 ]);
                 setOpms(opmsRes.data || []);
                 setTiposOcorrencia(tiposRes.data || []);
                 setOrganizacoes(orgsRes.data || []);
-                setCadernos(cadernosRes.data || []); // <-- Armazena os dados dos cadernos
+                setCadernos(cadernosRes.data || []);
             } catch (error) {
                 console.error('Erro ao carregar dados para o formulário:', error);
             } finally {
@@ -54,7 +55,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         };
         fetchData();
 
-        // Lógica para lidar com edição e criação
         if (existingOcorrencia && existingOcorrencia.id) {
             setOcorrencia({
                 ...initialOcorrenciaState,
@@ -67,9 +67,71 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     }, [existingOcorrencia]);
 
+    useEffect(() => {
+        const logradouro = ocorrencia.logradouro || '';
+        if (logradouro.length < 3 || !ocorrencia.cidade || !ocorrencia.uf) {
+            setAddressSuggestions([]);
+            return;
+        }
+
+        const handler = setTimeout(async () => {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${ocorrencia.uf}/${ocorrencia.cidade}/${encodeURIComponent(logradouro)}/json/`);
+                const data = await response.json();
+                if (data && !data.erro && Array.isArray(data)) {
+                    setAddressSuggestions(data);
+                } else {
+                    setAddressSuggestions([]);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar endereço:', error);
+                setAddressSuggestions([]);
+            }
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [ocorrencia.logradouro, ocorrencia.cidade, ocorrencia.uf]);
+
+    // Função para obter coordenadas a partir de um endereço
+    const fetchCoordinates = async (address) => {
+        try {
+            const addressQuery = `${address.logradouro}, ${address.cidade}, ${address.uf}`;
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=1`);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                return { lat: data[0].lat, lon: data[0].lon };
+            }
+        } catch (error) {
+            console.error('Erro ao obter coordenadas:', error);
+        }
+        return { lat: 'Não encontrado', lon: 'Não encontrado' };
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setOcorrencia(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSuggestionClick = async (suggestion) => {
+        const addressData = {
+            logradouro: suggestion.logradouro,
+            bairro: suggestion.bairro,
+            cep: suggestion.cep.replace(/\D/g, ''),
+            cidade: suggestion.localidade,
+            uf: suggestion.uf,
+        };
+        
+        setOcorrencia(prev => ({
+            ...prev,
+            ...addressData,
+            latitude: 'A procurar...', 
+            longitude: 'A procurar...'
+        }));
+        setAddressSuggestions([]);
+
+        const { lat, lon } = await fetchCoordinates({ logradouro: suggestion.logradouro, cidade: suggestion.localidade, uf: suggestion.uf });
+        setOcorrencia(prev => ({ ...prev, latitude: lat, longitude: lon }));
     };
 
     const handleEnvolvidoChange = (index, e) => {
@@ -99,13 +161,16 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                 const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
                 const data = await response.json();
                 if (!data.erro) {
-                    setOcorrencia(prev => ({
-                        ...prev,
+                    const addressData = {
                         logradouro: data.logradouro,
                         bairro: data.bairro,
                         cidade: data.localidade,
                         uf: data.uf
-                    }));
+                    };
+                    setOcorrencia(prev => ({ ...prev, ...addressData, latitude: 'A procurar...', longitude: 'A procurar...' }));
+                    
+                    const { lat, lon } = await fetchCoordinates({ logradouro: data.logradouro, cidade: data.localidade, uf: data.uf });
+                    setOcorrencia(prev => ({ ...prev, latitude: lat, longitude: lon }));
                 }
             } catch (error) {
                 console.error('Erro ao buscar CEP:', error);
@@ -136,7 +201,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="ocorrencia-form">
+        <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
             <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
 
             <div className="form-section">
@@ -148,7 +213,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                         <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
                     ))}
                 </select>
-                {/* <-- Dropdown do Caderno Informativo adicionado aqui --> */}
                 <select name="caderno_informativo" value={ocorrencia.caderno_informativo || ''} onChange={handleInputChange}>
                     <option value="">Selecione o Caderno</option>
                     {cadernos.map(caderno => (
@@ -162,12 +226,42 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
 
             <div className="form-section">
                 <h3>Localização</h3>
-                <input type="text" name="cep" value={ocorrencia.cep} onChange={handleInputChange} onBlur={handleCepBlur} placeholder="CEP" />
-                <input type="text" name="logradouro" value={ocorrencia.logradouro} onChange={handleInputChange} placeholder="Logradouro" />
+                <p className="form-note">Preencha UF e Cidade para habilitar a busca por logradouro.</p>
+                <div style={{display: 'flex', gap: '10px'}}>
+                    <input style={{flex: 1}} type="text" name="uf" value={ocorrencia.uf} onChange={handleInputChange} placeholder="UF" maxLength="2" />
+                    <input style={{flex: 3}} type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
+                </div>
+
+                <div className="autocomplete-container">
+                    <input
+                        type="text"
+                        name="logradouro"
+                        value={ocorrencia.logradouro || ''}
+                        onChange={handleInputChange}
+                        placeholder="Digite o Logradouro para buscar..."
+                        disabled={!ocorrencia.uf || !ocorrencia.cidade}
+                    />
+                    {addressSuggestions.length > 0 && (
+                        <ul className="suggestions-list">
+                            {addressSuggestions.map((suggestion, index) => (
+                                <li key={`${suggestion.cep}-${index}`} onClick={() => handleSuggestionClick(suggestion)}>
+                                    <strong>{suggestion.logradouro}</strong>, {suggestion.bairro} - {suggestion.localidade}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+
                 <input type="text" name="bairro" value={ocorrencia.bairro} onChange={handleInputChange} placeholder="Bairro" />
-                <input type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
-                <input type="text" name="uf" value={ocorrencia.uf} onChange={handleInputChange} placeholder="UF" />
-                 <select name="opm_area" value={ocorrencia.opm_area || ''} onChange={handleInputChange}>
+                <input type="text" name="cep" value={ocorrencia.cep} onChange={handleInputChange} onBlur={handleCepBlur} placeholder="CEP" />
+                
+                {/* Campos de Latitude e Longitude */}
+                <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                    <input style={{flex: 1}} type="text" name="latitude" value={ocorrencia.latitude} onChange={handleInputChange} placeholder="Latitude" />
+                    <input style={{flex: 1}} type="text" name="longitude" value={ocorrencia.longitude} onChange={handleInputChange} placeholder="Longitude" />
+                </div>
+
+                 <select name="opm_area" value={ocorrencia.opm_area || ''} onChange={handleInputChange} style={{marginTop: '10px'}}>
                     <option value="">Selecione a OPM da Área</option>
                     {opms.map(opm => (
                         <option key={opm.id} value={opm.id}>{opm.nome}</option>
