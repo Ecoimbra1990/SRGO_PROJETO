@@ -1,3 +1,4 @@
+import { getLocalidadePorNome } from '../api';
 import React, { useState, useEffect } from 'react';
 import api, { getOPMs, getTiposOcorrencia, getOrganizacoes, getCadernos, getModelosArma } from '../api';
 import './OcorrenciaForm.css';
@@ -25,7 +26,7 @@ const initialOcorrenciaState = {
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
-
+    const [areaSugerida, setAreaSugerida] = useState(null);
     // Estados para os dados dos dropdowns
     const [opms, setOpms] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
@@ -104,6 +105,36 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         return () => clearTimeout(handler);
     }, [ocorrencia.logradouro, ocorrencia.cidade, ocorrencia.uf]);
 
+    // Adicione este novo useEffect
+useEffect(() => {
+    // Usa o bairro como prioritário para a busca, se não, usa a cidade
+    const termoBusca = ocorrencia.bairro || ocorrencia.cidade;
+
+    if (termoBusca.length < 3) {
+        setAreaSugerida(null);
+        return;
+    }
+
+    const handler = setTimeout(async () => {
+        try {
+            const response = await getLocalidadePorNome(termoBusca);
+            if (response.data && response.data.length > 0) {
+                const localidadeEncontrada = response.data[0];
+                setAreaSugerida(localidadeEncontrada);
+                // Pré-seleciona a OPM no formulário
+                setOcorrencia(prev => ({ ...prev, opm_area: localidadeEncontrada.opm }));
+            } else {
+                setAreaSugerida(null);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar área policial:', error);
+            setAreaSugerida(null);
+        }
+    }, 500); // Espera 500ms após o utilizador parar de digitar
+
+    return () => clearTimeout(handler);
+}, [ocorrencia.bairro, ocorrencia.cidade]); // Ativa sempre que bairro ou cidade mudam
+    
     // Efeito para buscar modelos de arma
     useEffect(() => {
         if (armaSearchTerm.length < 2 || activeSuggestionIndex === null) {
