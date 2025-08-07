@@ -123,18 +123,31 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     }, [armaSearchTerm, activeSuggestionIndex]);
 
     const fetchCoordinates = async (address) => {
-        try {
-            const addressQuery = `${address.logradouro}, ${address.cidade}, ${address.uf}`;
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressQuery)}&format=json&limit=1`);
-            const data = await response.json();
-            if (data && data.length > 0) {
-                return { lat: data[0].lat, lon: data[0].lon };
-            }
-        } catch (error) {
-            console.error('Erro ao obter coordenadas:', error);
+    const apiKey = process.env.REACT_APP_Maps_API_KEY; // Sua chave de API do Google
+    if (!apiKey) {
+        console.error("A chave da API do Google Maps não foi definida.");
+        return { lat: 'Chave não configurada', lon: 'Chave não configurada' };
+    }
+
+    try {
+        const addressQuery = `${address.logradouro}, ${address.bairro}, ${address.cidade}, ${address.uf}`;
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressQuery)}&key=${apiKey}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 'OK' && data.results[0]) {
+            const location = data.results[0].geometry.location;
+            return { lat: location.lat, lon: location.lng }; // Note que o Google retorna 'lng' para longitude
+        } else {
+            console.error('Erro ao obter coordenadas do Google Maps:', data.status, data.error_message);
+            return { lat: 'Não encontrado', lon: 'Não encontrado' };
         }
-        return { lat: '', lon: '' };
-    };
+    } catch (error) {
+        console.error('Erro ao chamar a API do Google Maps:', error);
+        return { lat: 'Erro na chamada', lon: 'Erro na chamada' };
+    }
+};
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
