@@ -23,6 +23,7 @@ class OcorrenciaViewSet(viewsets.ModelViewSet):
     # Configuração dos filtros
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
+        'id': ['exact'], # Filtro para o número da ocorrência
         'opm_area': ['exact'],
         'bairro': ['icontains'], # icontains = case-insensitive contains
         'tipo_ocorrencia': ['exact'],

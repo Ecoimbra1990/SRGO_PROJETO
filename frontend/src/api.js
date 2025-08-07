@@ -18,6 +18,7 @@ export const registerUser = (userData) => api.post('/register/', userData);
 export const getOcorrencias = (filters = {}) => {
     // Constrói os parâmetros da query string a partir do objeto de filtros
     const params = new URLSearchParams();
+    if (filters.id) params.append('id', filters.id);
     if (filters.opm_area) params.append('opm_area', filters.opm_area);
     if (filters.bairro) params.append('bairro__icontains', filters.bairro);
     if (filters.tipo_ocorrencia) params.append('tipo_ocorrencia', filters.tipo_ocorrencia);

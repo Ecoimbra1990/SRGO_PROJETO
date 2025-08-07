@@ -9,7 +9,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
     
     // Estados para os filtros
     const [filters, setFilters] = useState({
-        opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: ''
+        id: '', opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: ''
     });
     const [opms, setOpms] = useState([]);
     const [tipos, setTipos] = useState([]);
@@ -55,7 +55,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
     };
 
     const clearFilters = () => {
-        setFilters({ opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: '' });
+        setFilters({ id: '', opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: '' });
     };
 
     return (
@@ -64,6 +64,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
 
             {/* Formulário de Filtros */}
             <div className="filter-bar">
+                <input type="number" name="id" value={filters.id} onChange={handleFilterChange} placeholder="Nº da Ocorrência" />
                 <select name="opm_area" value={filters.opm_area} onChange={handleFilterChange}>
                     <option value="">Todas as OPMs</option>
                     {opms.map(opm => <option key={opm.id} value={opm.id}>{opm.nome}</option>)}
@@ -83,6 +84,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
             <table className="ocorrencia-table">
                 <thead>
                     <tr>
+                        <th>Nº</th>
                         <th>Tipo</th>
                         <th>Data do Fato</th>
                         <th>Bairro</th>
@@ -93,6 +95,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 <tbody>
                     {ocorrencias.length > 0 ? ocorrencias.map(ocorrencia => (
                         <tr key={ocorrencia.id} onClick={() => onSelectOcorrencia(ocorrencia.id)}>
+                            <td>{ocorrencia.id}</td>
                             <td>{ocorrencia.tipo_ocorrencia_nome}</td>
                             <td>{new Date(ocorrencia.data_fato).toLocaleDateString('pt-BR')}</td>
                             <td>{ocorrencia.bairro || 'N/A'}</td>
@@ -111,7 +114,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                         </tr>
                     )) : (
                         <tr>
-                            <td colSpan="5">Nenhum registro encontrado.</td>
+                            <td colSpan="6">Nenhum registro encontrado.</td>
                         </tr>
                     )}
                 </tbody>
