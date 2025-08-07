@@ -1,9 +1,77 @@
 modelo,tipo,marca,calibre
-Taurus G2C,FOGO,Taurus,9mm
-Taurus G3,FOGO,Taurus,.40
-IMBEL MD2,FOGO,IMBEL,5.56mm
-Glock G17,FOGO,Glock,9mm
-Revólver 38,FOGO,Taurus,.38
-Espingarda Calibre 12,FOGO,CBC,12
-Faca de Combate,BRANCA,Tramontina,N/A
-Simulacro de Pistola,SIMULACRO,N/A,N/A
+PT 92,Pistola,Taurus,9mm
+PT 100,Pistola,Taurus,.40 S&W
+PT 838,Pistola,Taurus,.380 ACP
+PT 58 HC Plus,Pistola,Taurus,.380 ACP
+G2c,Pistola,Taurus,9mm
+G2c,Pistola,Taurus,.40 S&W
+G3,Pistola,Taurus,9mm
+TH9,Pistola,Taurus,9mm
+TH40,Pistola,Taurus,.40 S&W
+TS9,Pistola,Taurus,9mm
+Glock G17,Pistola,Glock,9mm
+Glock G19,Pistola,Glock,9mm
+Glock G22,Pistola,Glock,.40 S&W
+Glock G25,Pistola,Glock,.380 ACP
+Beretta 92FS,Pistola,Beretta,9mm
+Beretta M9,Pistola,Beretta,9mm
+Bersa Thunder 9,Pistola,Bersa,9mm
+Fabricação Caseira,Pistola,Artesanal,9mm
+Fabricação Caseira,Pistola,Artesanal,.380 ACP
+Não Identificado,Pistola,Marca Desconhecida,9mm
+RT 85,Revólver,Taurus,.38 SPL
+RT 85S,Revólver,Taurus,.38 SPL
+RT 627,Revólver,Taurus,.357 Magnum
+RT 889,Revólver,Taurus,.38 SPL
+RT 608,Revólver,Taurus,.357 Magnum
+RT 838,Revólver,Taurus,.38 SPL
+Modelo 82,Revólver,Rossi,.38 SPL
+Modelo 971,Revólver,Rossi,.357 Magnum
+Não Identificado,Revólver,Marca Desconhecida,.38 SPL
+Não Identificado,Revólver,Marca Desconhecida,.32 S&W
+Não Identificado,Revólver,Marca Desconhecida,.22 LR
+Fabricação Caseira,Revólver,Artesanal,.38 SPL
+Fabricação Caseira,Revólver,Artesanal,.22 LR
+AR-15 (variantes),Fuzil,Diversas (Colt, DPMS, Aero),5.56x45mm
+AR-15 (variantes),Fuzil,Artesanal/Fantasma,5.56x45mm
+AK-47/AKM,Fuzil,Diversas (Izhmash, Norinco),7.62x39mm
+AK-47/AKM,Fuzil,Marca Desconhecida,7.62x39mm
+FAL (Fuzil Automático Leve),Fuzil,IMBEL,7.62x51mm
+ParaFAL,Fuzil,IMBEL,7.62x51mm
+M4,Fuzil,Diversas (Colt, etc.),5.56x45mm
+T4,Fuzil,Taurus,5.56x45mm
+Mossberg 500,Espingarda,Mossberg,12
+CBC Military 3.0,Espingarda,CBC,12
+CBC Pump 586.2,Espingarda,CBC,12
+Boito Pump,Espingarda,Boito,12
+Remington 870,Espingarda,Remington,12
+Calibre 12,Espingarda,Fabricação Caseira,12
+Calibre 12,Espingarda,Marca Desconhecida,12
+Calibre 20,Espingarda,Marca Desconhecida,20
+Calibre .36,Espingarda,Marca Desconhecida,.36 (410)
+Dois Canos,Espingarda,Marca Desconhecida,12
+Dois Canos,Espingarda,Marca Desconhecida,20
+Puma,Carabina,Taurus,.38 SPL
+Puma,Carabina,Taurus,.357 Magnum
+CTT40,Carabina,Taurus,.40 S&W
+CT9,Carabina,Taurus,9mm
+CBC 7022,Carabina,CBC,.22 LR
+Rifle 8022,Carabina,CBC,.22 LR
+Não Identificado,Carabina,Marca Desconhecida,.22 LR
+Não Identificado,Carabina,Marca Desconhecida,.38 SPL
+MT-40,Submetralhadora,Taurus,.40 S&W
+MT-9,Submetralhadora,Taurus,.40 S&W
+Uzi/Mini-Uzi,Submetralhadora,IMI/Artesanal,9mm
+MAC-10/MAC-11,Submetralhadora,Ingram/Artesanal,9mm
+MAC-10/MAC-11,Submetralhadora,Ingram/Artesanal,.45 ACP
+Fabricação Caseira,Submetralhadora,Artesanal,9mm
+Fabricação Caseira,Submetralhadora,Artesanal,.380 ACP
+FN MAG,Metralhadora,FN Herstal,7.62x51mm
+M2 Browning,Metralhadora,FN Herstal/Diversas,.50 BMG
+PKM,Metralhadora,Diversas,7.62x54mmR
+Madsen,Metralhadora,Diversas,7mm Mauser
+Granada de Mão (Militar),Granada/Explosivo,IMBEL/Militar,N/A
+Granada de Mão (Caseira),Granada/Explosivo,Fabricação Caseira,N/A
+Artefato Explosivo Improvisado (AEI),Granada/Explosivo,Fabricação Caseira,N/A
+Emulsão Explosiva (Dinamite),Granada/Explosivo,Diversas (Uso Civil),N/A
+Estopim e Espoleta,Granada/Explosivo,Diversas,N/A
