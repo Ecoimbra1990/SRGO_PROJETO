@@ -3,7 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# ... (Outros modelos como RISP, AISP, etc. não sofrem alterações)
+# ... (RISP, AISP, OPM, Localidade, Efetivo, OrganizacaoCriminosa - sem alterações)
 class RISP(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     coordenadoria = models.CharField(max_length=255, blank=True, verbose_name="COORPIN")
@@ -48,25 +48,25 @@ class CadernoInformativo(models.Model):
     descricao = models.TextField(blank=True, null=True)
     def __str__(self): return self.nome
 
-class Ocorrencia(models.Model):
-    # --- EDITE ESTA LISTA COM AS SUAS NOVAS OPÇÕES ---
-    TIPO_HOMICIDIO_CHOICES = [
-        # O formato é: ('VALOR_NO_BANCO', 'Texto que aparece para o utilizador')
-        ('CVLI', 'CVLI - Crimes Violentos Letais Intencionais'),
-        ('FEMINICIDIO', 'Feminicídio'),
-        ('LATROCINIO', 'Latrocínio (Roubo seguido de Morte)'),
-        ('OPOSICAO_POLICIAL', 'Morte por Oposição à Intervenção Policial'),
-        ('MORTE_A_ESCLARECER', 'Morte a Esclarecer'),
-        # Adicione aqui quantas outras opções desejar
-        ('OUTRO', 'Outro'),
-    ]
+# --- NOVO MODELO PARA GERIR OS TIPOS DE CRIME ---
+class ModalidadeCrime(models.Model):
+    nome = models.CharField(max_length=100, unique=True, verbose_name="Nome da Modalidade")
+    descricao = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return self.nome
+
+class Ocorrencia(models.Model):
     tipo_ocorrencia = models.ForeignKey('TipoOcorrencia', on_delete=models.SET_NULL, null=True)
+    
+    # --- CAMPO ALTERADO PARA USAR O NOVO MODELO ---
+    # Em vez de uma lista fixa, agora é uma relação com a nova tabela
+    tipo_homicidio = models.ForeignKey('ModalidadeCrime', on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Tipo do Crime")
+
     caderno_informativo = models.ForeignKey('CadernoInformativo', on_delete=models.SET_NULL, null=True, blank=True)
     opm_area = models.ForeignKey('OPM', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="OPM da Área")
     aisp_area = models.ForeignKey('AISP', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="AISP da Área")
     risp_area = models.ForeignKey('RISP', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="RISP da Área")
-    tipo_homicidio = models.CharField(max_length=20, choices=TIPO_HOMICIDIO_CHOICES, blank=True, null=True, verbose_name="Tipo do Crime")
     foto_ocorrencia = models.ImageField(upload_to='fotos_ocorrencias/', blank=True, null=True, verbose_name="Foto da Ocorrência")
     
     data_fato = models.DateTimeField()
