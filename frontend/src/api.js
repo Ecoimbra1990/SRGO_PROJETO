@@ -1,14 +1,11 @@
 import axios from 'axios';
 
-// A URL base deve apontar diretamente para o seu backend no Render.
-// A variável de ambiente no Render (REACT_APP_API_URL) também deve ter este valor.
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://srgo-backend.onrender.com';
 
 const api = axios.create({
     baseURL: API_BASE_URL
 });
 
-// Adiciona o token de autenticação a cada pedido
 api.interceptors.request.use(async config => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -17,12 +14,11 @@ api.interceptors.request.use(async config => {
     return config;
 }, error => Promise.reject(error));
 
-// --- Auth ---
-// Os caminhos agora começam com /api/, que será combinado com a URL base.
+// Auth
 export const loginUser = (credentials) => api.post('/api/token/', credentials);
 export const registerUser = (userData) => api.post('/api/register/', userData);
 
-// --- Ocorrências ---
+// Ocorrências
 export const getOcorrencias = (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.id) params.append('id', filters.id);
@@ -39,12 +35,19 @@ export const createOcorrencia = (ocorrencia) => api.post('/api/ocorrencias/', oc
 export const updateOcorrencia = (id, ocorrencia) => api.put(`/api/ocorrencias/${id}/`, ocorrencia);
 export const deleteOcorrencia = (id) => api.delete(`/api/ocorrencias/${id}/`);
 
-// --- Lookups (Dados de Apoio) ---
+// Lookups
 export const getOrganizacoes = () => api.get('/api/organizacoes/');
 export const getTiposOcorrencia = () => api.get('/api/tipos-ocorrencia/');
 export const getCadernos = () => api.get('/api/cadernos/');
 export const getOPMs = () => api.get('/api/opms/');
 export const getModelosArma = (search = '') => api.get(`/api/modelos-arma/?search=${search}`);
-// Adicione esta função ao ficheiro api.js
 export const getLocalidadePorNome = (search = '') => api.get(`/api/localidades/?search=${search}`);
+
+// --- NOVA FUNÇÃO PARA O PDF ---
+export const gerarCadernoPDF = (ocorrencia_ids) => {
+    return api.post('/api/gerar-caderno-pdf/', { ocorrencia_ids }, {
+        responseType: 'blob', // Importante para receber o ficheiro
+    });
+};
+
 export default api;
