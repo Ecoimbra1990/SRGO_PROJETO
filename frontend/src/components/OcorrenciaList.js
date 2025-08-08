@@ -1,22 +1,16 @@
-// frontend/src/components/OcorrenciaList.js
-
 import React, { useState, useEffect } from 'react';
-import { getOcorrencias, getOPMs, getTiposOcorrencia } from '../api';
+import { getOcorrencias, getOPMs, getTiposOcorrencia, gerarCadernoPDF } from '../api';
 import './OcorrenciaList.css';
 
 const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
     const [ocorrencias, setOcorrencias] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    
-    // Estados para os filtros
-    const [filters, setFilters] = useState({
-        id: '', opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: ''
-    });
+    const [filters, setFilters] = useState({ id: '', opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: '' });
     const [opms, setOpms] = useState([]);
     const [tipos, setTipos] = useState([]);
+    const [selectedOcorrencias, setSelectedOcorrencias] = useState([]);
 
-    // Busca os dados para os dropdowns dos filtros
     useEffect(() => {
         const fetchFilterData = async () => {
             try {
@@ -30,7 +24,6 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
         fetchFilterData();
     }, []);
 
-    // Busca as ocorrências sempre que os filtros ou o sinal de refresh mudam
     useEffect(() => {
         const fetchOcorrencias = async () => {
             try {
@@ -60,11 +53,39 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
         setFilters({ id: '', opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: '' });
     };
 
+    const handleSelectRow = (id) => {
+        setSelectedOcorrencias(prevSelected => {
+            if (prevSelected.includes(id)) {
+                return prevSelected.filter(item => item !== id);
+            } else {
+                return [...prevSelected, id];
+            }
+        });
+    };
+    
+    const handleGerarPDF = async () => {
+        if (selectedOcorrencias.length === 0) {
+            alert("Por favor, selecione pelo menos uma ocorrência para gerar o caderno.");
+            return;
+        }
+        try {
+            const response = await gerarCadernoPDF(selectedOcorrencias);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'caderno_informativo.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (err) {
+            console.error("Erro ao gerar PDF:", err);
+            setError("Não foi possível gerar o PDF.");
+        }
+    };
+
     return (
         <div className="ocorrencia-list-container">
             <h3>Registros de Ocorrências</h3>
-
-            {/* Formulário de Filtros */}
             <div className="filter-bar">
                 <input type="number" name="id" value={filters.id} onChange={handleFilterChange} placeholder="Nº da Ocorrência" />
                 <select name="opm_area" value={filters.opm_area} onChange={handleFilterChange}>
@@ -79,6 +100,9 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 <input type="number" name="ano" value={filters.ano} onChange={handleFilterChange} placeholder="Ano (ex: 2025)" />
                 <input type="number" name="mes" value={filters.mes} onChange={handleFilterChange} placeholder="Mês (1-12)" min="1" max="12" />
                 <button onClick={clearFilters} className="clear-button">Limpar Filtros</button>
+                <button onClick={handleGerarPDF} className="pdf-button" disabled={selectedOcorrencias.length === 0}>
+                    Gerar Caderno ({selectedOcorrencias.length})
+                </button>
             </div>
 
             {loading ? <p>Carregando ocorrências...</p> : 
@@ -86,6 +110,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
             <table className="ocorrencia-table">
                 <thead>
                     <tr>
+                        <th>Sel.</th>
                         <th>Nº</th>
                         <th>Tipo</th>
                         <th>Data do Fato</th>
@@ -96,7 +121,18 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 </thead>
                 <tbody>
                     {ocorrencias.length > 0 ? ocorrencias.map(ocorrencia => (
-                        <tr key={ocorrencia.id} onClick={() => onSelectOcorrencia(ocorrencia.id)}>
+                        <tr 
+                            key={ocorrencia.id} 
+                            onClick={() => onSelectOcorrencia(ocorrencia.id)}
+                            className={selectedOcorrencias.includes(ocorrencia.id) ? 'selected-row' : ''}
+                        >
+                            <td onClick={(e) => e.stopPropagation()}>
+                                <input 
+                                    type="checkbox"
+                                    checked={selectedOcorrencias.includes(ocorrencia.id)}
+                                    onChange={() => handleSelectRow(ocorrencia.id)}
+                                />
+                            </td>
                             <td>{ocorrencia.id}</td>
                             <td>{ocorrencia.tipo_ocorrencia_nome}</td>
                             <td>{new Date(ocorrencia.data_fato).toLocaleDateString('pt-BR')}</td>
@@ -116,7 +152,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                         </tr>
                     )) : (
                         <tr>
-                            <td colSpan="6">Nenhum registro encontrado.</td>
+                            <td colSpan="7">Nenhum registro encontrado.</td>
                         </tr>
                     )}
                 </tbody>
