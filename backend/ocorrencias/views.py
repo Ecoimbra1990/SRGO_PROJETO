@@ -5,13 +5,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import *
 from .serializers import *
 
-# Imports para a nova funcionalidade de PDF
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from io import BytesIO
 from reportlab.pdfgen import canvas
-# --- IMPORTAÇÃO CORRIGIDA ---
 from reportlab.lib import pagesizes
 from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -23,7 +21,6 @@ from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.contrib.staticfiles.finders import find
 
-# --- HELPER PARA O CABEÇALHO E RODAPÉ DO PDF ---
 class PageNumCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
         canvas.Canvas.__init__(self, *args, **kwargs)
@@ -45,7 +42,6 @@ class PageNumCanvas(canvas.Canvas):
         self.setFont("Helvetica", 9)
         self.drawRightString(20*cm, 1.5*cm, f"Página {self._pageNumber} de {page_count}")
 
-# --- VIEW PRINCIPAL PARA GERAR O PDF ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -77,7 +73,6 @@ class GerarCadernoPDFView(APIView):
         ocorrencias = Ocorrencia.objects.filter(id__in=ocorrencia_ids).order_by('-data_fato')
 
         buffer = BytesIO()
-        # --- USO CORRIGIDO DE PAGESIZES.A4 (MAIÚSCULO) ---
         p = PageNumCanvas(buffer, pagesize=pagesizes.A4)
         width, height = pagesizes.A4
         
@@ -124,7 +119,10 @@ class GerarCadernoPDFView(APIView):
 
         p.save()
         buffer.seek(0)
-        response = HttpResponse(buffer, content_type='application/pdf')
+        
+        # --- LINHA CORRIGIDA ---
+        # Em vez de passar o buffer, passamos o seu conteúdo de bytes
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
         return response
 
