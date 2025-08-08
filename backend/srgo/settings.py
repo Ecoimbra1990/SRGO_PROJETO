@@ -1,6 +1,5 @@
-"""
-Django settings for srgo project.
-"""
+# backend/srgo/settings.py
+
 from pathlib import Path
 import os
 import dj_database_url
@@ -31,7 +30,6 @@ WSGI_APPLICATION = 'srgo.wsgi.application'
 
 if 'DATABASE_URL' in os.environ:
     DATABASES = {'default': dj_database_url.config(conn_max_age=600, ssl_require=True)}
-    # (LINHA ESSENCIAL) Adiciona o schema padrão para o PostgreSQL no Render
     DATABASES['default']['OPTIONS'] = {'options': '-c search_path=public'}
 else:
     DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
@@ -46,9 +44,18 @@ LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Bahia'
 USE_I18N = True
 USE_TZ = True
+
+# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS E DE MÉDIA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# URL para aceder aos ficheiros de média no navegador
+MEDIA_URL = '/media/'
+# Caminho no servidor onde os ficheiros de upload serão guardados
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# --- FIM DA CONFIGURAÇÃO ---
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',),
