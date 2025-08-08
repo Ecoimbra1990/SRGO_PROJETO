@@ -10,23 +10,10 @@ import api, {
 import './OcorrenciaForm.css';
 
 const initialOcorrenciaState = {
-    tipo_ocorrencia: '',
-    data_fato: '',
-    descricao_fato: '',
-    fonte_informacao: '',
-    evolucao_ocorrencia: '',
-    cep: '',
-    logradouro: '',
-    bairro: '',
-    cidade: '',
-    uf: '',
-    latitude: '',
-    longitude: '',
-    opm_area: '',
-    caderno_informativo: '',
-    tipo_homicidio: null,
-    envolvidos: [],
-    armas_apreendidas: []
+    tipo_ocorrencia: '', data_fato: '', descricao_fato: '', fonte_informacao: '',
+    evolucao_ocorrencia: '', cep: '', logradouro: '', bairro: '', cidade: '',
+    uf: '', latitude: '', longitude: '', opm_area: '', caderno_informativo: '',
+    envolvidos: [], armas_apreendidas: [], tipo_homicidio: null
 };
 
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
@@ -358,9 +345,11 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                         <label>Tipo do Crime:</label>
                         <select name="tipo_homicidio" value={ocorrencia.tipo_homicidio || ''} onChange={handleInputChange}>
                             <option value="">Selecione...</option>
-                            <option value="MASCULINA">Vítima Masculina</option>
-                            <option value="FEMININA">Vítima Feminina (Feminicídio)</option>
-                            <option value="CONFRONTO">Oposição à Intervenção Policial</option>
+                            <option value="CVLI">CVLI - Crimes Violentos Letais Intencionais</option>
+                            <option value="FEMINICIDIO">Feminicídio</option>
+                            <option value="LATROCINIO">Latrocínio (Roubo seguido de Morte)</option>
+                            <option value="OPOSICAO_POLICIAL">Morte por Oposição à Intervenção Policial</option>
+                            <option value="MORTE_A_ESCLARECER">Morte a Esclarecer</option>
                             <option value="OUTRO">Outro</option>
                         </select>
                     </div>
