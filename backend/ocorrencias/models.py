@@ -3,7 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Modelos de Área Geográfica e Organizacional
+# ... (Outros modelos como RISP, AISP, etc. não sofrem alterações)
 class RISP(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     coordenadoria = models.CharField(max_length=255, blank=True, verbose_name="COORPIN")
@@ -24,7 +24,6 @@ class Localidade(models.Model):
     opm = models.ForeignKey('OPM', on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self): return self.municipio_bairro
 
-# Modelos Principais
 class Efetivo(models.Model):
     nome = models.CharField(max_length=255)
     matricula = models.CharField(max_length=30, unique=True)
@@ -50,10 +49,15 @@ class CadernoInformativo(models.Model):
     def __str__(self): return self.nome
 
 class Ocorrencia(models.Model):
+    # --- EDITE ESTA LISTA COM AS SUAS NOVAS OPÇÕES ---
     TIPO_HOMICIDIO_CHOICES = [
-        ('MASCULINA', 'Vítima Masculina'),
-        ('FEMININA', 'Vítima Feminina (Feminicídio)'),
-        ('CONFRONTO', 'Oposição à Intervenção Policial'),
+        # O formato é: ('VALOR_NO_BANCO', 'Texto que aparece para o utilizador')
+        ('CVLI', 'CVLI - Crimes Violentos Letais Intencionais'),
+        ('FEMINICIDIO', 'Feminicídio'),
+        ('LATROCINIO', 'Latrocínio (Roubo seguido de Morte)'),
+        ('OPOSICAO_POLICIAL', 'Morte por Oposição à Intervenção Policial'),
+        ('MORTE_A_ESCLARECER', 'Morte a Esclarecer'),
+        # Adicione aqui quantas outras opções desejar
         ('OUTRO', 'Outro'),
     ]
 
@@ -92,64 +96,14 @@ class Ocorrencia(models.Model):
                 self.risp_area = self.opm_area.aisp.risp
         super().save(*args, **kwargs)
 
-# --- ALTERAÇÕES NO MODELO PESSOAENVOLVIDA ---
+# ... (outros modelos sem alterações)
 class PessoaEnvolvida(models.Model):
     TIPO_ENVOLVIMENTO_CHOICES = [('VITIMA', 'Vítima'), ('TESTEMUNHA', 'Testemunha'), ('SUSPEITO', 'Suspeito'), ('AUTOR', 'Autor'), ('OUTRO', 'Outro')]
     STATUS_CHOICES = [('MORTO', 'Morto'), ('FERIDO', 'Ferido'), ('CAPTURADO', 'Capturado'), ('ILESO', 'Ileso'), ('NAO_APLICAVEL', 'Não Aplicável')]
     DOCUMENTO_CHOICES = [('CPF', 'CPF'), ('RG', 'RG'), ('OUTRO', 'Outro')]
-    # --- NOVO: Opções para o campo SEXO ---
     SEXO_CHOICES = [('M', 'Masculino'), ('F', 'Feminino'), ('I', 'Indefinido')]
     
     ocorrencia = models.ForeignKey('Ocorrencia', related_name='envolvidos', on_delete=models.CASCADE)
     nome = models.CharField(max_length=255)
-    
-    # --- NOVO CAMPO ADICIONADO ---
     sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, default='I', blank=True, null=True)
-    
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NAO_APLICAVEL', blank=True, null=True)
-    tipo_documento = models.CharField(max_length=10, choices=DOCUMENTO_CHOICES, blank=True, null=True)
-    documento = models.CharField(max_length=50, blank=True, null=True, verbose_name="Número do Documento")
-    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVIMENTO_CHOICES)
-    observacoes = models.TextField(blank=True, null=True)
-    organizacao_criminosa = models.ForeignKey('OrganizacaoCriminosa', on_delete=models.SET_NULL, null=True, blank=True, related_name='membros')
-    
-    def __str__(self): return f"{self.nome} ({self.get_tipo_envolvimento_display()})"
-
-class ProcedimentoPenal(models.Model):
-    STATUS_CHOICES = [('EM_INVESTIGACAO', 'Em Investigação'), ('EM_ANDAMENTO', 'Em Andamento'), ('CONCLUIDO', 'Concluído'), ('ARQUIVADO', 'Arquivado')]
-    pessoa_envolvida = models.ForeignKey('PessoaEnvolvida', related_name='procedimentos', on_delete=models.CASCADE)
-    numero_processo = models.CharField(max_length=100, blank=True, null=True)
-    vara_tribunal = models.CharField(max_length=200, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_INVESTIGACAO')
-    detalhes = models.TextField(blank=True, null=True)
-    def __str__(self): return f"Processo {self.numero_processo or 'N/A'}"
-
-class ModeloArma(models.Model):
-    TIPO_CHOICES = [('FOGO', 'Arma de Fogo'), ('BRANCA', 'Arma Branca'), ('SIMULACRO', 'Simulacro'), ('ARTESANAL', 'Artesanal'), ('OUTRO', 'Outro')]
-    ESPECIE_CHOICES = [
-        ('PISTOLA', 'Pistola'), ('REVOLVER', 'Revólver'), ('FUZIL', 'Fuzil'),
-        ('ESPINGARDA', 'Espingarda'), ('METRALHADORA', 'Metralhadora'),
-        ('SUBMETRALHADORA', 'Submetralhadora'), ('GRANADA', 'Granada'),
-        ('EXPLOSIVO', 'Outros Explosivos'), ('NAO_DEFINIDA', 'Não Definida'),
-    ]
-
-    modelo = models.CharField(max_length=100, unique=True, help_text="Ex: Taurus G2C, IMBEL MD2")
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='FOGO')
-    especie = models.CharField(max_length=20, choices=ESPECIE_CHOICES, default='NAO_DEFINIDA', verbose_name="Espécie da Arma")
-    marca = models.CharField(max_length=100, blank=True, help_text="Ex: Taurus, Glock, IMBEL")
-    calibre = models.CharField(max_length=50, blank=True, help_text="Ex: 9mm, .40, .380")
-    
-    def __str__(self): return self.modelo
-
-class ArmaApreendida(models.Model):
-    ocorrencia = models.ForeignKey('Ocorrencia', related_name='armas_apreendidas', on_delete=models.CASCADE)
-    modelo_catalogado = models.ForeignKey('ModeloArma', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Modelo (do Catálogo)")
-    tipo = models.CharField(max_length=100, help_text="Ex: Arma de Fogo, Arma Branca...")
-    marca = models.CharField(max_length=100, blank=True)
-    modelo = models.CharField(max_length=100)
-    calibre = models.CharField(max_length=50, blank=True)
-    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de Série")
-    observacoes = models.TextField(blank=True)
-    
-    def __str__(self):
-        return f"{self.modelo} ({self.numero_serie or 'S/N'}) - Ocorrência {self.ocorrencia.id}"
+    status = models.CharField(max
