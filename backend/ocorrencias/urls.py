@@ -1,4 +1,3 @@
-from .views import LocalidadeViewSet
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
@@ -7,7 +6,11 @@ from .views import (
     TipoOcorrenciaViewSet,
     CadernoInformativoViewSet,
     OPMViewSet,
-    ModeloArmaViewSet
+    ModeloArmaViewSet,
+    LocalidadeViewSet,
+    GerarCadernoPDFView,
+    DashboardAnalyticsView,
+    ModalidadeCrimeViewSet # Importa a nova viewset
 )
 
 router = DefaultRouter()
@@ -18,7 +21,12 @@ router.register(r'cadernos', CadernoInformativoViewSet, basename='caderno')
 router.register(r'opms', OPMViewSet, basename='opm')
 router.register(r'modelos-arma', ModeloArmaViewSet, basename='modeloarma')
 router.register(r'localidades', LocalidadeViewSet, basename='localidade')
+# --- REGISTO DO NOVO ENDPOINT ---
+router.register(r'modalidades-crime', ModalidadeCrimeViewSet, basename='modalidadecrime')
+
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('gerar-caderno-pdf/', GerarCadernoPDFView.as_view(), name='gerar_caderno_pdf'),
+    path('dashboard-analytics/', DashboardAnalyticsView.as_view(), name='dashboard_analytics'),
 ]
