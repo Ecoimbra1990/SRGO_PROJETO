@@ -5,20 +5,23 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import *
 from .serializers import *
 
-# Imports para a funcionalidade de PDF
+# Imports para PDF e Análises
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from io import BytesIO
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import a4
 from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.platypus import Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib import colors
+import pandas as pd
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
 
-# ... (Classe PageNumCanvas e GerarCadernoPDFView - sem alterações)
+# --- HELPER PARA O CABEÇALHO E RODAPÉ DO PDF ---
 class PageNumCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
         canvas.Canvas.__init__(self, *args, **kwargs)
@@ -40,13 +43,13 @@ class PageNumCanvas(canvas.Canvas):
         self.setFont("Helvetica", 9)
         self.drawRightString(20*cm, 1.5*cm, f"Página {self._pageNumber} de {page_count}")
 
+# --- VIEW PARA GERAR O PDF ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def draw_header(self, canvas, width):
         coppm_logo_path = 'backend/static/assets/coppm.png'
         pmba_logo_path = 'backend/static/assets/pmba.png'
-        
         try:
             logo_coppm = Image(coppm_logo_path, width=2.5*cm, height=2.5*cm)
             logo_coppm.drawOn(canvas, 1.5*cm, 26*cm)
@@ -55,7 +58,6 @@ class GerarCadernoPDFView(APIView):
             logo_pmba = Image(pmba_logo_path, width=2.5*cm, height=2.5*cm)
             logo_pmba.drawOn(canvas, width - 4*cm, 26*cm)
         except Exception: pass
-
         canvas.setFont("Helvetica-Bold", 14)
         canvas.drawCentredString(width / 2.0, 27.5*cm, "GOVERNO DO ESTADO DA BAHIA")
         canvas.setFont("Helvetica-Bold", 12)
@@ -87,7 +89,6 @@ class GerarCadernoPDFView(APIView):
             story = []
             tipo_ocorrencia_str = ocorrencia.tipo_ocorrencia.nome.upper() if ocorrencia.tipo_ocorrencia else "NÃO ESPECIFICADO"
             story.append(Paragraph(f"<b>OCORRÊNCIA Nº {ocorrencia.id} - {tipo_ocorrencia_str}</b>", styles['H2']))
-
             data = [
                 [Paragraph('<b>Data/Hora do Fato:</b>', styles['TableHeader']), Paragraph(ocorrencia.data_fato.strftime('%d/%m/%Y %H:%M'), styles['TableBody'])],
                 [Paragraph('<b>Local:</b>', styles['TableHeader']), Paragraph(f"{ocorrencia.cidade} / {ocorrencia.bairro}", styles['TableBody'])],
@@ -96,17 +97,14 @@ class GerarCadernoPDFView(APIView):
             table = Table(data, colWidths=[4*cm, 14*cm])
             story.append(table)
             story.append(Spacer(1, 0.4*cm))
-            
             story.append(Paragraph("<b>DESCRIÇÃO DO FATO:</b>", styles['TableHeader']))
             story.append(Paragraph(ocorrencia.descricao_fato.replace('\n', '<br/>'), styles['Justify']))
-
             total_height = sum([s.wrapOn(p, width - 3*cm, height)[1] for s in story]) + 2*cm
             
             if y_position - total_height < 3*cm:
                 self.draw_header(p, width)
                 p.showPage()
                 y_position = height - 4.5*cm
-
             if i == 0:
                 p.setFont("Helvetica-Bold", 16)
                 p.drawCentredString(width / 2.0, 25*cm, "CADERNO INFORMATIVO DE OCORRÊNCIAS")
@@ -116,18 +114,33 @@ class GerarCadernoPDFView(APIView):
                 h = item.wrapOn(p, width - 3*cm, height)[1]
                 item.drawOn(p, 1.5*cm, y_position - h)
                 y_position -= h
-            
             y_position -= 1.5*cm
             p.line(1.5*cm, y_position + 0.7*cm, width - 1.5*cm, y_position + 0.7*cm)
 
         p.save()
         buffer.seek(0)
-        
         response = HttpResponse(buffer, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
         return response
 
-# --- NOVA VIEWSET PARA MODALIDADECRIME ---
+# --- VIEW PARA O DASHBOARD ---
+class DashboardAnalyticsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        queryset = Ocorrencia.objects.all()
+        heatmap_data = list(queryset.exclude(latitude__isnull=True, longitude__isnull=True).values('latitude', 'longitude'))
+        ocorrencias_por_mes = queryset.annotate(month=TruncMonth('data_fato')).values('month').annotate(count=Count('id')).order_by('month')
+        top_tipos = list(queryset.values('tipo_ocorrencia__nome').annotate(count=Count('id')).order_by('-count')[:5])
+        top_bairros = list(queryset.values('bairro').annotate(count=Count('id')).order_by('-count')[:5])
+        data = {
+            'heatmap_data': heatmap_data,
+            'ocorrencias_por_mes': list(ocorrencias_por_mes),
+            'top_tipos_ocorrencia': top_tipos,
+            'top_bairros': top_bairros,
+        }
+        return Response(data)
+
+# --- ViewSets ---
 class ModalidadeCrimeViewSet(viewsets.ModelViewSet):
     queryset = ModalidadeCrime.objects.all().order_by('nome')
     serializer_class = ModalidadeCrimeSerializer
