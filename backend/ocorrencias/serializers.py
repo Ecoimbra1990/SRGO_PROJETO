@@ -1,9 +1,8 @@
-# backend/ocorrencias/serializers.py
-
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
 
+# ... (outros serializers)
 class OPMSerializer(serializers.ModelSerializer):
     class Meta:
         model = OPM
@@ -43,6 +42,12 @@ class CadernoInformativoSerializer(serializers.ModelSerializer):
         model = CadernoInformativo
         fields = ['id', 'nome']
 
+# --- NOVO SERIALIZER ---
+class ModalidadeCrimeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModalidadeCrime
+        fields = ['id', 'nome']
+
 class ProcedimentoPenalSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedimentoPenal
@@ -55,7 +60,6 @@ class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PessoaEnvolvida
-        # --- CAMPO 'sexo' ADICIONADO ---
         fields = [
             'id', 'nome', 'sexo', 'status', 'tipo_documento', 'documento', 
             'tipo_envolvimento', 'observacoes', 'organizacao_criminosa', 
@@ -73,18 +77,8 @@ class ArmaApreendidaSerializer(serializers.ModelSerializer):
         fields = ['id', 'tipo', 'marca', 'modelo', 'calibre', 'numero_serie', 'observacoes', 'modelo_catalogado']
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    envolvidos = PessoaEnvolvidaSerializer(many=True, required=False)
-    armas_apreendidas = ArmaApreendidaSerializer(many=True, required=False)
-    
-    usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
-    usuario_registro_nome_completo = serializers.SerializerMethodField()
-    
-    opm_area_nome = serializers.CharField(source='opm_area.nome', read_only=True, allow_null=True)
-    aisp_area_nome = serializers.CharField(source='aisp_area.nome', read_only=True, allow_null=True)
-    risp_area_nome = serializers.CharField(source='risp_area.nome', read_only=True, allow_null=True)
-    
-    tipo_ocorrencia_nome = serializers.CharField(source='tipo_ocorrencia.nome', read_only=True, allow_null=True)
-    caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
+    # ... (outros campos)
+    tipo_homicidio_nome = serializers.CharField(source='tipo_homicidio.nome', read_only=True, allow_null=True)
 
     class Meta:
         model = Ocorrencia
@@ -94,7 +88,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             'opm_area', 'opm_area_nome', 
             'aisp_area', 'aisp_area_nome',
             'risp_area', 'risp_area_nome',
-            'tipo_homicidio',
+            'tipo_homicidio', 'tipo_homicidio_nome', # Adicionado
             'foto_ocorrencia',
             'data_fato', 'descricao_fato', 'fonte_informacao', 'evolucao_ocorrencia',
             'usuario_registro', 'usuario_registro_username', 'usuario_registro_nome_completo',
@@ -103,6 +97,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['usuario_registro', 'aisp_area', 'risp_area']
 
+    # ... (restante do OcorrenciaSerializer e UserRegistrationSerializer)
     def get_usuario_registro_nome_completo(self, obj):
         if obj.usuario_registro:
             full_name = obj.usuario_registro.get_full_name()
