@@ -467,42 +467,4 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                                     <input type="text" name="modelo" value={arma.modelo} onChange={(e) => handleArmaChange(index, e)} placeholder="Modelo da Arma (digite para buscar)" required />
                                     {armaSuggestions.length > 0 && activeSuggestionIndex === index && (
                                         <ul className="suggestions-list">
-                                            {armaSuggestions.map((sug) => (
-                                                <li key={sug.id} onClick={() => handleArmaSuggestionClick(sug, index)}>
-                                                    <strong>{sug.modelo}</strong> ({sug.marca || 'N/A'} - {sug.calibre || 'N/A'})
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                                <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                                    <select name="especie" value={arma.especie} onChange={(e) => handleArmaChange(index, e)} disabled={!!arma.modelo_catalogado}>
-                                        <option value="NAO_DEFINIDA">Espécie (N/D)</option>
-                                        <option value="PISTOLA">Pistola</option>
-                                        <option value="REVOLVER">Revólver</option>
-                                        <option value="FUZIL">Fuzil</option>
-                                        <option value="ESPINGARDA">Espingarda</option>
-                                        <option value="METRALHADORA">Metralhadora</option>
-                                        <option value="SUBMETRALHADORA">Submetralhadora</option>
-                                        <option value="GRANADA">Granada</option>
-                                        <option value="EXPLOSIVO">Outros Explosivos</option>
-                                    </select>
-                                    <input type="text" name="marca" value={arma.marca} onChange={(e) => handleArmaChange(index, e)} placeholder="Marca" disabled={!!arma.modelo_catalogado} />
-                                    <input type="text" name="calibre" value={arma.calibre} onChange={(e) => handleArmaChange(index, e)} placeholder="Calibre" disabled={!!arma.modelo_catalogado} />
-                                </div>
-                                <input type="text" name="numero_serie" value={arma.numero_serie} onChange={(e) => handleArmaChange(index, e)} placeholder="Número de Série" style={{marginTop: '10px'}} />
-                                <textarea name="observacoes" value={arma.observacoes} onChange={(e) => handleArmaChange(index, e)} placeholder="Observações" />
-                                <button type="button" className="remove-button" onClick={() => removerArma(index)}>Remover Arma</button>
-                            </div>
-                        ))}
-                        <button type="button" className="add-button" onClick={adicionarArma}>+ Adicionar Arma</button>
-                    </div>
-                )}
-            </div>
-
-            <button type="submit" className="submit-button">Salvar Ocorrência</button>
-        </form>
-    );
-};
-
-export default OcorrenciaForm;
+                                            {armaSuggestions.map((sug)
