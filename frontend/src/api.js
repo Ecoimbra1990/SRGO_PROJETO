@@ -42,11 +42,13 @@ export const getCadernos = () => api.get('/api/cadernos/');
 export const getOPMs = () => api.get('/api/opms/');
 export const getModelosArma = (search = '') => api.get(`/api/modelos-arma/?search=${search}`);
 export const getLocalidadePorNome = (search = '') => api.get(`/api/localidades/?search=${search}`);
+// --- NOVA FUNÇÃO PARA BUSCAR AS MODALIDADES ---
+export const getModalidadesCrime = () => api.get('/api/modalidades-crime/');
 
-// --- NOVA FUNÇÃO PARA O PDF ---
+// PDF
 export const gerarCadernoPDF = (ocorrencia_ids) => {
     return api.post('/api/gerar-caderno-pdf/', { ocorrencia_ids }, {
-        responseType: 'blob', // Importante para receber o ficheiro
+        responseType: 'blob',
     });
 };
 
