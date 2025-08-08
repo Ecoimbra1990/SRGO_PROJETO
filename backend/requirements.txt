@@ -11,4 +11,4 @@ google-auth-oauthlib==1.2.0
 django-filter==24.2
 Pillow==10.4.0
 reportlab==4.2.0
-pandas
+pandas==2.2.2
