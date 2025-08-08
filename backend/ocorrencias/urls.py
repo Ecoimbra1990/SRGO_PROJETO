@@ -10,7 +10,7 @@ from .views import (
     LocalidadeViewSet,
     GerarCadernoPDFView,
     DashboardAnalyticsView,
-    ModalidadeCrimeViewSet # Importa a nova viewset
+    ModalidadeCrimeViewSet
 )
 
 router = DefaultRouter()
@@ -21,9 +21,7 @@ router.register(r'cadernos', CadernoInformativoViewSet, basename='caderno')
 router.register(r'opms', OPMViewSet, basename='opm')
 router.register(r'modelos-arma', ModeloArmaViewSet, basename='modeloarma')
 router.register(r'localidades', LocalidadeViewSet, basename='localidade')
-# --- REGISTO DO NOVO ENDPOINT ---
 router.register(r'modalidades-crime', ModalidadeCrimeViewSet, basename='modalidadecrime')
-
 
 urlpatterns = [
     path('', include(router.urls)),
