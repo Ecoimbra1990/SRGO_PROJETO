@@ -9,29 +9,14 @@ import api, {
 } from '../api';
 import './OcorrenciaForm.css';
 
-// Estado inicial completo para uma nova ocorrência
 const initialOcorrenciaState = {
-    tipo_ocorrencia: '',
-    data_fato: '',
-    descricao_fato: '',
-    fonte_informacao: '',
-    evolucao_ocorrencia: '',
-    cep: '',
-    logradouro: '',
-    bairro: '',
-    cidade: '',
-    uf: '',
-    latitude: '',
-    longitude: '',
-    opm_area: '',
-    caderno_informativo: '',
-    tipo_homicidio: null,
-    envolvidos: [],
-    armas_apreendidas: []
+    tipo_ocorrencia: '', data_fato: '', descricao_fato: '', fonte_informacao: '',
+    evolucao_ocorrencia: '', cep: '', logradouro: '', bairro: '', cidade: '',
+    uf: '', latitude: '', longitude: '', opm_area: '', caderno_informativo: '',
+    envolvidos: [], armas_apreendidas: [], tipo_homicidio: null
 };
 
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
-    // Estados do componente
     const [loading, setLoading] = useState(true);
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
@@ -47,7 +32,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
     const [areaSugerida, setAreaSugerida] = useState(null);
 
-    // Efeitos para carregar dados e lógica
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -186,7 +170,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         const { name, value } = e.target;
         setOcorrencia(prev => ({ ...prev, [name]: value }));
     };
-    
+
     const handleFileChange = (e) => {
         setFotoFile(e.target.files[0]);
     };
