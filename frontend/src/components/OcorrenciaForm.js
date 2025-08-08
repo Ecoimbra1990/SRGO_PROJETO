@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import api, {
+    getOPMs,
+    getTiposOcorrencia,
+    getOrganizacoes,
+    getCadernos,
+    getModelosArma,
+    getLocalidadePorNome
+} from '../api';
 import './OcorrenciaForm.css';
 
 const initialOcorrenciaState = {
@@ -10,12 +17,12 @@ const initialOcorrenciaState = {
 };
 
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
+    const [loading, setLoading] = useState(true);
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
+    const [opms, setOpms] = useState([]);
     const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
     const [isHomicidio, setIsHomicidio] = useState(false);
-    // ... (outros estados)
-    const [opms, setOpms] = useState([]);
     const [organizacoes, setOrganizacoes] = useState([]);
     const [cadernos, setCadernos] = useState([]);
     const [addressSuggestions, setAddressSuggestions] = useState([]);
@@ -24,17 +31,13 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
     const [armaSuggestions, setArmaSuggestions] = useState([]);
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
     const [areaSugerida, setAreaSugerida] = useState(null);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
                 const [opmsRes, tiposRes, orgsRes, cadernosRes] = await Promise.all([
-                    api.get('/api/opms/'), 
-                    api.get('/api/tipos-ocorrencia/'), 
-                    api.get('/api/organizacoes/'), 
-                    api.get('/api/cadernos/')
+                    getOPMs(), getTiposOcorrencia(), getOrganizacoes(), getCadernos()
                 ]);
                 setOpms(opmsRes.data || []);
                 setTiposOcorrencia(tiposRes.data || []);
@@ -78,6 +81,91 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     }, [ocorrencia.tipo_ocorrencia, tiposOcorrencia]);
 
+    useEffect(() => {
+        const termoBusca = ocorrencia.bairro || ocorrencia.cidade;
+        if (termoBusca.length < 3) {
+            setAreaSugerida(null);
+            return;
+        }
+        const handler = setTimeout(async () => {
+            try {
+                const response = await getLocalidadePorNome(termoBusca);
+                if (response.data && response.data.length > 0) {
+                    const localidadeEncontrada = response.data[0];
+                    setAreaSugerida(localidadeEncontrada);
+                    setOcorrencia(prev => ({ ...prev, opm_area: localidadeEncontrada.opm }));
+                } else {
+                    setAreaSugerida(null);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar área policial:', error);
+                setAreaSugerida(null);
+            }
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [ocorrencia.bairro, ocorrencia.cidade]);
+
+    useEffect(() => {
+        const logradouro = ocorrencia.logradouro || '';
+        if (logradouro.length < 3 || !ocorrencia.cidade || !ocorrencia.uf) {
+            setAddressSuggestions([]);
+            return;
+        }
+        const handler = setTimeout(async () => {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${ocorrencia.uf}/${ocorrencia.cidade}/${encodeURIComponent(logradouro)}/json/`);
+                const data = await response.json();
+                if (data && !data.erro && Array.isArray(data)) {
+                    setAddressSuggestions(data);
+                } else {
+                    setAddressSuggestions([]);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar endereço:', error);
+                setAddressSuggestions([]);
+            }
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [ocorrencia.logradouro, ocorrencia.cidade, ocorrencia.uf]);
+
+    useEffect(() => {
+        if (armaSearchTerm.length < 2 || activeSuggestionIndex === null) {
+            setArmaSuggestions([]);
+            return;
+        }
+        const handler = setTimeout(async () => {
+            try {
+                const response = await getModelosArma(armaSearchTerm);
+                setArmaSuggestions(response.data || []);
+            } catch (error) {
+                console.error("Erro ao buscar modelos de arma:", error);
+                setArmaSuggestions([]);
+            }
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [armaSearchTerm, activeSuggestionIndex]);
+
+    const fetchCoordinates = async (address) => {
+        const apiKey = process.env.REACT_APP_Maps_API_KEY;
+        if (!apiKey) {
+            console.error("A chave da API do Google Maps não foi definida.");
+            return { lat: 'Chave não configurada', lon: 'Chave não configurada' };
+        }
+        try {
+            const addressQuery = `${address.logradouro}, ${address.cidade}, ${address.uf}`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressQuery)}&key=${apiKey}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.status === 'OK' && data.results[0]) {
+                const location = data.results[0].geometry.location;
+                return { lat: location.lat, lon: location.lng };
+            }
+        } catch (error) {
+            console.error('Erro ao obter coordenadas:', error);
+        }
+        return { lat: '', lon: '' };
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setOcorrencia(prev => ({ ...prev, [name]: value }));
@@ -87,40 +175,43 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         setFotoFile(e.target.files[0]);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
+    const handleSuggestionClick = async (suggestion) => {
+        const addressData = {
+            logradouro: suggestion.logradouro,
+            bairro: suggestion.bairro,
+            cep: suggestion.cep.replace(/\D/g, ''),
+            cidade: suggestion.localidade,
+            uf: suggestion.uf,
+        };
+        setOcorrencia(prev => ({ ...prev, ...addressData, latitude: 'A procurar...', longitude: 'A procurar...' }));
+        setAddressSuggestions([]);
+        const { lat, lon } = await fetchCoordinates(addressData);
+        setOcorrencia(prev => ({ ...prev, ...addressData, latitude: lat, longitude: lon }));
+    };
 
-        Object.keys(ocorrencia).forEach(key => {
-            if (!['envolvidos', 'armas_apreendidas'].includes(key)) {
-                if (ocorrencia[key] !== null && ocorrencia[key] !== undefined) {
-                    formData.append(key, ocorrencia[key]);
+    const handleCepBlur = async (e) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        if (cep.length === 8) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                if (!data.erro) {
+                    const addressData = { logradouro: data.logradouro, bairro: data.bairro, cidade: data.localidade, uf: data.uf };
+                    setOcorrencia(prev => ({ ...prev, ...addressData, latitude: 'A procurar...', longitude: 'A procurar...' }));
+                    const { lat, lon } = await fetchCoordinates(addressData);
+                    setOcorrencia(prev => ({ ...prev, ...addressData, latitude: lat, longitude: lon }));
                 }
+            } catch (error) {
+                console.error('Erro ao buscar CEP:', error);
             }
-        });
-        
-        // Stringify arrays before appending
-        formData.append('envolvidos', JSON.stringify(ocorrencia.envolvidos));
-        formData.append('armas_apreendidas', JSON.stringify(ocorrencia.armas_apreendidas));
-
-        if (fotoFile) {
-            formData.append('foto_ocorrencia', fotoFile);
         }
-        
-        try {
-            if (ocorrencia.id) {
-                await api.put(`/api/ocorrencias/${ocorrencia.id}/`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-            } else {
-                await api.post('/api/ocorrencias/', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-            }
-            onSuccess();
-        } catch (error) {
-            console.error('Erro ao salvar ocorrência:', error.response?.data || error);
-        }
+    };
+    
+    const handleEnvolvidoChange = (index, e) => {
+        const { name, value } = e.target;
+        const novosEnvolvidos = [...ocorrencia.envolvidos];
+        novosEnvolvidos[index][name] = value;
+        setOcorrencia(prev => ({ ...prev, envolvidos: novosEnvolvidos }));
     };
 
     const adicionarEnvolvido = () => {
@@ -130,103 +221,71 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
                 nome: '', tipo_envolvimento: 'SUSPEITO', observacoes: '', 
                 organizacao_criminosa: null, procedimentos: [],
                 status: 'NAO_APLICAVEL', tipo_documento: 'CPF', documento: '',
-                sexo: 'I' // Valor inicial para o novo campo
+                sexo: 'I'
             }]
         }));
     };
+
+    const removerEnvolvido = (index) => {
+        const novosEnvolvidos = [...ocorrencia.envolvidos];
+        novosEnvolvidos.splice(index, 1);
+        setOcorrencia(prev => ({ ...prev, envolvidos: novosEnvolvidos }));
+    };
+
+    const handleToggleSecaoArmas = (e) => {
+        const { checked } = e.target;
+        setMostrarSecaoArmas(checked);
+        if (!checked) {
+            setOcorrencia(prev => ({ ...prev, armas_apreendidas: [] }));
+        }
+    };
+
+    const handleArmaChange = (index, e) => {
+        const { name, value } = e.target;
+        const novasArmas = [...ocorrencia.armas_apreendidas];
+        const armaAtual = { ...novasArmas[index] };
+        armaAtual[name] = value.toUpperCase();
+        
+        if (['modelo', 'marca', 'calibre', 'tipo', 'especie'].includes(name) && armaAtual.modelo_catalogado) {
+            armaAtual.modelo_catalogado = null; 
+        }
+        novasArmas[index] = armaAtual;
+        setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas }));
+
+        if (name === 'modelo') {
+            setArmaSearchTerm(value.toUpperCase());
+            setActiveSuggestionIndex(index);
+        }
+    };
     
-    // ... (restante da lógica do formulário)
+    const handleArmaSuggestionClick = (suggestion, index) => {
+        const novasArmas = [...ocorrencia.armas_apreendidas];
+        novasArmas[index] = {
+            ...novasArmas[index],
+            modelo_catalogado: suggestion.id,
+            modelo: suggestion.modelo,
+            tipo: suggestion.tipo,
+            especie: suggestion.especie,
+            marca: suggestion.marca,
+            calibre: suggestion.calibre,
+        };
+        setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas }));
+        setArmaSuggestions([]);
+        setActiveSuggestionIndex(null);
+        setArmaSearchTerm('');
+    };
 
-    if (loading) return <p>Carregando formulário...</p>;
-    
-    return (
-        <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
-            <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
+    const adicionarArma = () => {
+        setOcorrencia(prev => ({
+            ...prev,
+            armas_apreendidas: [...prev.armas_apreendidas, { 
+                tipo: 'FOGO', especie: 'NAO_DEFINIDA', marca: '', modelo: '', 
+                calibre: '', numero_serie: '', observacoes: '' 
+            }]
+        }));
+    };
 
-            <div className="form-section">
-                <h3>Informações Gerais</h3>
-                <input type="datetime-local" name="data_fato" value={ocorrencia.data_fato} onChange={handleInputChange} required />
-                <select name="tipo_ocorrencia" value={ocorrencia.tipo_ocorrencia || ''} onChange={handleInputChange} required>
-                    <option value="">Selecione o Tipo de Ocorrência</option>
-                    {tiposOcorrencia.map(tipo => (<option key={tipo.id} value={tipo.id}>{tipo.nome}</option>))}
-                </select>
-
-                {isHomicidio && (
-                    <div style={{marginTop: '10px'}}>
-                        <label>Tipo do Crime:</label>
-                        <select name="tipo_homicidio" value={ocorrencia.tipo_homicidio || ''} onChange={handleInputChange}>
-                            <option value="">Selecione...</option>
-                            <option value="MASCULINA">Vítima Masculina</option>
-                            <option value="FEMININA">Vítima Feminina (Feminicídio)</option>
-                            <option value="CONFRONTO">Oposição à Intervenção Policial</option>
-                            <option value="OUTRO">Outro</option>
-                        </select>
-                    </div>
-                )}
-                
-                <div style={{marginTop: '10px'}}>
-                    <label>Foto da Ocorrência (opcional):</label>
-                    <input type="file" name="foto_ocorrencia" onChange={handleFileChange} />
-                </div>
-            </div>
-
-            <div className="form-section">
-                <h3>Pessoas Envolvidas</h3>
-                {ocorrencia.envolvidos.map((envolvido, index) => (
-                    <div key={index} className="dynamic-list-item">
-                        <input type="text" name="nome" value={envolvido.nome} onChange={(e) => handleEnvolvidoChange(index, e)} placeholder="Nome Completo" required />
-                        
-                        <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                            {/* --- CAMPO SEXO ADICIONADO --- */}
-                            <select name="sexo" value={envolvido.sexo} onChange={(e) => handleEnvolvidoChange(index, e)}>
-                                <option value="I">Sexo (Indefinido)</option>
-                                <option value="M">Masculino</option>
-                                <option value="F">Feminino</option>
-                            </select>
-                            <select name="status" value={envolvido.status} onChange={(e) => handleEnvolvidoChange(index, e)}>
-                                <option value="NAO_APLICAVEL">Status (N/A)</option>
-                                <option value="MORTO">Morto</option>
-                                <option value="FERIDO">Ferido</option>
-                                <option value="CAPTURADO">Capturado</option>
-                                <option value="ILESO">Ileso</option>
-                            </select>
-                        </div>
-
-                        <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                             <select name="tipo_envolvimento" value={envolvido.tipo_envolvimento} onChange={(e) => handleEnvolvidoChange(index, e)}>
-                                <option value="SUSPEITO">Suspeito</option>
-                                <option value="VITIMA">Vítima</option>
-                                <option value="TESTEMUNHA">Testemunha</option>
-                                <option value="AUTOR">Autor</option>
-                                <option value="OUTRO">Outro</option>
-                            </select>
-                        </div>
-                        
-                        <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                            <select style={{flex: 1}} name="tipo_documento" value={envolvido.tipo_documento} onChange={(e) => handleEnvolvidoChange(index, e)}>
-                                <option value="CPF">CPF</option>
-                                <option value="RG">RG</option>
-                                <option value="OUTRO">Outro</option>
-                            </select>
-                            <input style={{flex: 2}} type="text" name="documento" value={envolvido.documento} onChange={(e) => handleEnvolvidoChange(index, e)} placeholder="Número do Documento" />
-                        </div>
-
-                        <select name="organizacao_criminosa" value={envolvido.organizacao_criminosa || ''} onChange={(e) => handleEnvolvidoChange(index, e)} style={{marginTop: '10px'}}>
-                            <option value="">Nenhuma Organização</option>
-                            {organizacoes.map(org => (<option key={org.id} value={org.id}>{org.nome}</option>))}
-                        </select>
-                        <textarea name="observacoes" value={envolvido.observacoes} onChange={(e) => handleEnvolvidoChange(index, e)} placeholder="Observações" />
-                        <button type="button" className="remove-button" onClick={() => removerEnvolvido(index)}>Remover</button>
-                    </div>
-                ))}
-                <button type="button" className="add-button" onClick={adicionarEnvolvido}>+ Adicionar Pessoa</button>
-            </div>
-            
-            {/* ... (restante do formulário) ... */}
-
-            <button type="submit" className="submit-button">Salvar Ocorrência</button>
-        </form>
-    );
-};
-
-export default OcorrenciaForm;
+    const removerArma = (index) => {
+        const novasArmas = [...ocorrencia.armas_apreendidas];
+        novasArmas.splice(index, 1);
+        setOcorrencia(prev => ({ ...prev, armas_apreendidas: novasArmas
