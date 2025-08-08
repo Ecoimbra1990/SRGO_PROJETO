@@ -4,7 +4,6 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
 
-# ... (outros serializers - OPM, RISP, AISP, etc. - sem alterações)
 class OPMSerializer(serializers.ModelSerializer):
     class Meta:
         model = OPM
@@ -53,8 +52,10 @@ class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
     procedimentos = ProcedimentoPenalSerializer(many=True, required=False)
     organizacao_criminosa = serializers.PrimaryKeyRelatedField(queryset=OrganizacaoCriminosa.objects.all(), allow_null=True, required=False)
     organizacao_criminosa_nome = serializers.CharField(source='organizacao_criminosa.nome', read_only=True, allow_null=True)
+
     class Meta:
         model = PessoaEnvolvida
+        # --- CAMPO 'sexo' ADICIONADO ---
         fields = [
             'id', 'nome', 'sexo', 'status', 'tipo_documento', 'documento', 
             'tipo_envolvimento', 'observacoes', 'organizacao_criminosa', 
@@ -108,7 +109,6 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             if full_name: return full_name
             try:
                 efetivo = Efetivo.objects.get(matricula=obj.usuario_registro.username)
-                # --- LINHA CORRIGIDA ---
                 return efetivo.nome
             except Efetivo.DoesNotExist:
                 return obj.usuario_registro.username
