@@ -4,6 +4,7 @@ from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
 
+# ... (outros serializers - OPM, RISP, AISP, etc. - sem alterações)
 class OPMSerializer(serializers.ModelSerializer):
     class Meta:
         model = OPM
@@ -55,7 +56,7 @@ class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PessoaEnvolvida
         fields = [
-            'id', 'nome', 'status', 'tipo_documento', 'documento', 
+            'id', 'nome', 'sexo', 'status', 'tipo_documento', 'documento', 
             'tipo_envolvimento', 'observacoes', 'organizacao_criminosa', 
             'organizacao_criminosa_nome', 'procedimentos'
         ]
@@ -77,7 +78,6 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
     usuario_registro_nome_completo = serializers.SerializerMethodField()
     
-    # Serializers para exibir os nomes das áreas, não apenas os IDs
     opm_area_nome = serializers.CharField(source='opm_area.nome', read_only=True, allow_null=True)
     aisp_area_nome = serializers.CharField(source='aisp_area.nome', read_only=True, allow_null=True)
     risp_area_nome = serializers.CharField(source='risp_area.nome', read_only=True, allow_null=True)
@@ -87,15 +87,14 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ocorrencia
-        # --- CAMPOS ATUALIZADOS PARA INCLUIR OS NOVOS ---
         fields = [
             'id', 'tipo_ocorrencia', 'tipo_ocorrencia_nome', 
             'caderno_informativo', 'caderno_informativo_nome',
             'opm_area', 'opm_area_nome', 
-            'aisp_area', 'aisp_area_nome', # Adicionado
-            'risp_area', 'risp_area_nome', # Adicionado
-            'tipo_homicidio', # Adicionado
-            'foto_ocorrencia', # Adicionado
+            'aisp_area', 'aisp_area_nome',
+            'risp_area', 'risp_area_nome',
+            'tipo_homicidio',
+            'foto_ocorrencia',
             'data_fato', 'descricao_fato', 'fonte_informacao', 'evolucao_ocorrencia',
             'usuario_registro', 'usuario_registro_username', 'usuario_registro_nome_completo',
             'cep', 'logradouro', 'bairro', 'cidade', 'uf', 'latitude', 'longitude',
@@ -109,4 +108,64 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             if full_name: return full_name
             try:
                 efetivo = Efetivo.objects.get(matricula=obj.usuario_registro.username)
-                return efetivo.
+                # --- LINHA CORRIGIDA ---
+                return efetivo.nome
+            except Efetivo.DoesNotExist:
+                return obj.usuario_registro.username
+        return None
+
+    def _handle_armas(self, ocorrencia, armas_data):
+        for arma_data in armas_data:
+            if not arma_data.get('modelo_catalogado'):
+                modelo_obj, created = ModeloArma.objects.get_or_create(
+                    modelo=arma_data['modelo'].upper(),
+                    defaults={
+                        'marca': arma_data.get('marca', '').upper(),
+                        'calibre': arma_data.get('calibre', '').upper(),
+                        'tipo': arma_data.get('tipo', 'FOGO'),
+                        'especie': arma_data.get('especie', 'NAO_DEFINIDA') 
+                    }
+                )
+                arma_data['modelo_catalogado'] = modelo_obj
+            arma_data.pop('especie', None)
+            ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
+
+    def create(self, validated_data):
+        envolvidos_data = validated_data.pop('envolvidos', [])
+        armas_data = validated_data.pop('armas_apreendidas', [])
+        ocorrencia = Ocorrencia.objects.create(**validated_data)
+        for envolvido_data in envolvidos_data:
+            PessoaEnvolvida.objects.create(ocorrencia=ocorrencia, **envolvido_data)
+        self._handle_armas(ocorrencia, armas_data)
+        return ocorrencia
+
+    def update(self, instance, validated_data):
+        envolvidos_data = validated_data.pop('envolvidos', [])
+        armas_data = validated_data.pop('armas_apreendidas', [])
+        instance = super().update(instance, validated_data)
+        instance.envolvidos.all().delete()
+        for envolvido_data in envolvidos_data:
+            PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
+        instance.armas_apreendidas.all().delete()
+        self._handle_armas(instance, armas_data)
+        return instance
+
+class UserRegistrationSerializer(serializers.Serializer):
+    matricula = serializers.CharField(max_length=20)
+    password = serializers.CharField(write_only=True)
+    def validate_matricula(self, value):
+        if not Efetivo.objects.filter(matricula=value).exists():
+            raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
+        return value
+    def create(self, validated_data):
+        efetivo_data = Efetivo.objects.get(matricula=validated_data['matricula'])
+        nome_completo = efetivo_data.nome.split()
+        user = User.objects.create_user(
+            username=validated_data['matricula'],
+            password=validated_data['password'],
+            first_name=nome_completo[0],
+            last_name=' '.join(nome_completo[1:]) if len(nome_completo) > 1 else ''
+        )
+        return user
