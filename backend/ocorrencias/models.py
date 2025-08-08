@@ -50,15 +50,33 @@ class CadernoInformativo(models.Model):
     def __str__(self): return self.nome
 
 class Ocorrencia(models.Model):
+    # --- NOVO: Opções para o tipo de homicídio ---
+    TIPO_HOMICIDIO_CHOICES = [
+        ('MASCULINA', 'Vítima Masculina'),
+        ('FEMININA', 'Vítima Feminina (Feminicídio)'),
+        ('CONFRONTO', 'Oposição à Intervenção Policial'),
+        ('OUTRO', 'Outro'),
+    ]
+
     tipo_ocorrencia = models.ForeignKey('TipoOcorrencia', on_delete=models.SET_NULL, null=True)
     caderno_informativo = models.ForeignKey('CadernoInformativo', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # --- NOVOS CAMPOS PARA ARMAZENAR A HIERARQUIA E A FOTO ---
     opm_area = models.ForeignKey('OPM', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="OPM da Área")
+    aisp_area = models.ForeignKey('AISP', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="AISP da Área")
+    risp_area = models.ForeignKey('RISP', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="RISP da Área")
+    tipo_homicidio = models.CharField(max_length=20, choices=TIPO_HOMICIDIO_CHOICES, blank=True, null=True, verbose_name="Tipo do Crime")
+    foto_ocorrencia = models.ImageField(upload_to='fotos_ocorrencias/', blank=True, null=True, verbose_name="Foto da Ocorrência")
+    
+    # Campos existentes
     data_fato = models.DateTimeField()
     descricao_fato = models.TextField()
     fonte_informacao = models.CharField(max_length=200, blank=True)
     evolucao_ocorrencia = models.TextField(blank=True)
     usuario_registro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
+    
+    # Campos de localização
     cep = models.CharField(max_length=9, blank=True, null=True)
     logradouro = models.CharField(max_length=255, blank=True, null=True)
     bairro = models.CharField(max_length=100, blank=True, null=True)
@@ -66,11 +84,24 @@ class Ocorrencia(models.Model):
     uf = models.CharField(max_length=2, blank=True, null=True)
     latitude = models.CharField(max_length=20, blank=True, null=True)
     longitude = models.CharField(max_length=20, blank=True, null=True)
+    
     def __str__(self):
         return f"{self.tipo_ocorrencia.nome if self.tipo_ocorrencia else 'N/A'} - {self.data_fato.strftime('%d/%m/%Y')}"
+        
+    # --- NOVO: Lógica para salvar a hierarquia automaticamente ---
+    def save(self, *args, **kwargs):
+        # Limpa os campos antes de redefinir para evitar dados inconsistentes
+        self.aisp_area = None
+        self.risp_area = None
+        # Se uma OPM for selecionada, preenche a hierarquia (AISP e RISP)
+        if self.opm_area and self.opm_area.aisp:
+            self.aisp_area = self.opm_area.aisp
+            if self.opm_area.aisp.risp:
+                self.risp_area = self.opm_area.aisp.risp
+        super().save(*args, **kwargs)
 
 class PessoaEnvolvida(models.Model):
-    TIPO_ENVOLVimento_CHOICES = [('VITIMA', 'Vítima'), ('TESTEMUNHA', 'Testemunha'), ('SUSPEITO', 'Suspeito'), ('AUTOR', 'Autor'), ('OUTRO', 'Outro')]
+    TIPO_ENVOLVIMENTO_CHOICES = [('VITIMA', 'Vítima'), ('TESTEMUNHA', 'Testemunha'), ('SUSPEITO', 'Suspeito'), ('AUTOR', 'Autor'), ('OUTRO', 'Outro')]
     STATUS_CHOICES = [('MORTO', 'Morto'), ('FERIDO', 'Ferido'), ('CAPTURADO', 'Capturado'), ('ILESO', 'Ileso'), ('NAO_APLICAVEL', 'Não Aplicável')]
     DOCUMENTO_CHOICES = [('CPF', 'CPF'), ('RG', 'RG'), ('OUTRO', 'Outro')]
     
@@ -79,7 +110,7 @@ class PessoaEnvolvida(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NAO_APLICAVEL', blank=True, null=True)
     tipo_documento = models.CharField(max_length=10, choices=DOCUMENTO_CHOICES, blank=True, null=True)
     documento = models.CharField(max_length=50, blank=True, null=True, verbose_name="Número do Documento")
-    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVimento_CHOICES)
+    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVIMENTO_CHOICES)
     observacoes = models.TextField(blank=True, null=True)
     organizacao_criminosa = models.ForeignKey('OrganizacaoCriminosa', on_delete=models.SET_NULL, null=True, blank=True, related_name='membros')
     
@@ -97,15 +128,10 @@ class ProcedimentoPenal(models.Model):
 class ModeloArma(models.Model):
     TIPO_CHOICES = [('FOGO', 'Arma de Fogo'), ('BRANCA', 'Arma Branca'), ('SIMULACRO', 'Simulacro'), ('ARTESANAL', 'Artesanal'), ('OUTRO', 'Outro')]
     ESPECIE_CHOICES = [
-        ('PISTOLA', 'Pistola'),
-        ('REVOLVER', 'Revólver'),
-        ('FUZIL', 'Fuzil'),
-        ('ESPINGARDA', 'Espingarda'),
-        ('METRALHADORA', 'Metralhadora'),
-        ('SUBMETRALHADORA', 'Submetralhadora'),
-        ('GRANADA', 'Granada'),
-        ('EXPLOSIVO', 'Outros Explosivos'),
-        ('NAO_DEFINIDA', 'Não Definida'),
+        ('PISTOLA', 'Pistola'), ('REVOLVER', 'Revólver'), ('FUZIL', 'Fuzil'),
+        ('ESPINGARDA', 'Espingarda'), ('METRALHADORA', 'Metralhadora'),
+        ('SUBMETRALHADORA', 'Submetralhadora'), ('GRANADA', 'Granada'),
+        ('EXPLOSIVO', 'Outros Explosivos'), ('NAO_DEFINIDA', 'Não Definida'),
     ]
 
     modelo = models.CharField(max_length=100, unique=True, help_text="Ex: Taurus G2C, IMBEL MD2")
@@ -119,8 +145,6 @@ class ModeloArma(models.Model):
 class ArmaApreendida(models.Model):
     ocorrencia = models.ForeignKey('Ocorrencia', related_name='armas_apreendidas', on_delete=models.CASCADE)
     modelo_catalogado = models.ForeignKey('ModeloArma', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Modelo (do Catálogo)")
-    
-    # Estes campos são preenchidos manualmente para armas novas ou automaticamente para as do catálogo
     tipo = models.CharField(max_length=100, help_text="Ex: Arma de Fogo, Arma Branca...")
     marca = models.CharField(max_length=100, blank=True)
     modelo = models.CharField(max_length=100)
