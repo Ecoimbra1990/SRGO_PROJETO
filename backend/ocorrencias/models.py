@@ -106,4 +106,50 @@ class PessoaEnvolvida(models.Model):
     ocorrencia = models.ForeignKey('Ocorrencia', related_name='envolvidos', on_delete=models.CASCADE)
     nome = models.CharField(max_length=255)
     sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, default='I', blank=True, null=True)
-    status = models.CharField(max
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NAO_APLICAVEL', blank=True, null=True)
+    tipo_documento = models.CharField(max_length=10, choices=DOCUMENTO_CHOICES, blank=True, null=True)
+    documento = models.CharField(max_length=50, blank=True, null=True, verbose_name="Número do Documento")
+    tipo_envolvimento = models.CharField(max_length=20, choices=TIPO_ENVOLVIMENTO_CHOICES)
+    observacoes = models.TextField(blank=True, null=True)
+    organizacao_criminosa = models.ForeignKey('OrganizacaoCriminosa', on_delete=models.SET_NULL, null=True, blank=True, related_name='membros')
+    
+    def __str__(self): return f"{self.nome} ({self.get_tipo_envolvimento_display()})"
+
+class ProcedimentoPenal(models.Model):
+    STATUS_CHOICES = [('EM_INVESTIGACAO', 'Em Investigação'), ('EM_ANDAMENTO', 'Em Andamento'), ('CONCLUIDO', 'Concluído'), ('ARQUIVADO', 'Arquivado')]
+    pessoa_envolvida = models.ForeignKey('PessoaEnvolvida', related_name='procedimentos', on_delete=models.CASCADE)
+    numero_processo = models.CharField(max_length=100, blank=True, null=True)
+    vara_tribunal = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_INVESTIGACAO')
+    detalhes = models.TextField(blank=True, null=True)
+    def __str__(self): return f"Processo {self.numero_processo or 'N/A'}"
+
+class ModeloArma(models.Model):
+    TIPO_CHOICES = [('FOGO', 'Arma de Fogo'), ('BRANCA', 'Arma Branca'), ('SIMULACRO', 'Simulacro'), ('ARTESANAL', 'Artesanal'), ('OUTRO', 'Outro')]
+    ESPECIE_CHOICES = [
+        ('PISTOLA', 'Pistola'), ('REVOLVER', 'Revólver'), ('FUZIL', 'Fuzil'),
+        ('ESPINGARDA', 'Espingarda'), ('METRALHADORA', 'Metralhadora'),
+        ('SUBMETRALHADORA', 'Submetralhadora'), ('GRANADA', 'Granada'),
+        ('EXPLOSIVO', 'Outros Explosivos'), ('NAO_DEFINIDA', 'Não Definida'),
+    ]
+
+    modelo = models.CharField(max_length=100, unique=True, help_text="Ex: Taurus G2C, IMBEL MD2")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='FOGO')
+    especie = models.CharField(max_length=20, choices=ESPECIE_CHOICES, default='NAO_DEFINIDA', verbose_name="Espécie da Arma")
+    marca = models.CharField(max_length=100, blank=True, help_text="Ex: Taurus, Glock, IMBEL")
+    calibre = models.CharField(max_length=50, blank=True, help_text="Ex: 9mm, .40, .380")
+    
+    def __str__(self): return self.modelo
+
+class ArmaApreendida(models.Model):
+    ocorrencia = models.ForeignKey('Ocorrencia', related_name='armas_apreendidas', on_delete=models.CASCADE)
+    modelo_catalogado = models.ForeignKey('ModeloArma', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Modelo (do Catálogo)")
+    tipo = models.CharField(max_length=100, help_text="Ex: Arma de Fogo, Arma Branca...")
+    marca = models.CharField(max_length=100, blank=True)
+    modelo = models.CharField(max_length=100)
+    calibre = models.CharField(max_length=50, blank=True)
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de Série")
+    observacoes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.modelo} ({self.numero_serie or 'S/N'}) - Ocorrência {self.ocorrencia.id}"
