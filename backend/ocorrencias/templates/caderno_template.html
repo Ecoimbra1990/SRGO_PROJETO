@@ -2,16 +2,19 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="/static/css/caderno_style.css">
-</head>
+    </head>
 <body>
-    <div class="header">
+    <div id="page-header">
         <img src="/static/assets/coppm.png" class="logo">
         <div class="header-title">
             <h2>POLÍCIA MILITAR DA BAHIA</h2>
             <h3>Comando de Operações Policiais Militares</h3>
         </div>
         <img src="/static/assets/pmba.png" class="logo">
+    </div>
+
+    <div id="page-footer">
+        PMBA, uma Força a serviço do cidadão! | Página <pdf:pagenumber> de <pdf:pagecount>
     </div>
 
     <div class="main-title">INFORMATIVO DE OCORRÊNCIAS</div>
@@ -23,10 +26,10 @@
             </div>
             <p><span class="info-label">Data/Hora do Fato:</span> {{ ocorrencia.data_fato|date:"d/m/Y H:i" }}</p>
             <p><span class="info-label">Local:</span> {{ ocorrencia.cidade }} / {{ ocorrencia.bairro }}</p>
-            <p><span class="info-label">RISP / AISP / OPM:</span>
-                {% if ocorrencia.risp_area %}{{ ocorrencia.risp_area.nome }}{% endif %} /
-                {% if ocorrencia.aisp_area %}{{ ocorrencia.aisp_area.nome }}{% endif %} /
-                {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% endif %}
+            <p><span class="info-label">RISP/AISP/OPM:</span>
+                {% if ocorrencia.risp_area %}{{ ocorrencia.risp_area.nome }}{% else %}N/A{% endif %} /
+                {% if ocorrencia.aisp_area %}{{ ocorrencia.aisp_area.nome }}{% else %}N/A{% endif %} /
+                {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% else %}N/A{% endif %}
             </p>
             
             {% if ocorrencia.foto_ocorrencia and ocorrencia.foto_ocorrencia.url %}
