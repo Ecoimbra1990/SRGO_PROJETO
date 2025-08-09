@@ -5,12 +5,12 @@
 </head>
 <body>
     <div id="page-header">
-        <img src="static/assets/coppm.png" class="logo">
+        <img src="{{ logo_coppm_path }}" class="logo">
         <div class="header-title">
             <h2>POLÍCIA MILITAR DA BAHIA</h2>
             <h3>Comando de Operações Policiais Militares</h3>
         </div>
-        <img src="static/assets/pmba.png" class="logo">
+        <img src="{{ logo_pmba_path }}" class="logo">
     </div>
 
     <div id="page-footer">
@@ -33,7 +33,7 @@
             </p>
             
             {% if ocorrencia.foto_ocorrencia and ocorrencia.foto_ocorrencia.path %}
-                <img src="{{ ocorrencia.foto_ocorrencia.path }}" class="ocorrencia-image">
+                <img src="file://{{ ocorrencia.foto_ocorrencia.path }}" class="ocorrencia-image">
             {% endif %}
             
             <div class="description">
