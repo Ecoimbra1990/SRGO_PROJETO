@@ -17,11 +17,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
     const [isHomicidio, setIsHomicidio] = useState(false);
-    const [addressSuggestions, setAddressSuggestions] = useState([]);
     const [mostrarSecaoArmas, setMostrarSecaoArmas] = useState(false);
-    const [armaSearchTerm, setArmaSearchTerm] = useState('');
-    const [armaSuggestions, setArmaSuggestions] = useState([]);
-    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
     const [areaSugerida, setAreaSugerida] = useState(null);
 
     const { opms, tiposOcorrencia, organizacoes, cadernos, modalidadesCrime } = lookupData;
@@ -56,26 +52,24 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
 
     useEffect(() => {
         const termoBusca = ocorrencia.bairro || ocorrencia.cidade;
-        if (termoBusca.length < 3) {
-            setAreaSugerida(null);
-            return;
-        }
-        const handler = setTimeout(async () => {
-            try {
-                const response = await getLocalidadePorNome(termoBusca);
-                if (response.data && response.data.length > 0) {
-                    const localidadeEncontrada = response.data[0];
-                    setAreaSugerida(localidadeEncontrada);
-                    setOcorrencia(prev => ({ ...prev, opm_area: localidadeEncontrada.opm }));
-                } else {
+        if (termoBusca && termoBusca.length >= 3) {
+            const handler = setTimeout(async () => {
+                try {
+                    const response = await getLocalidadePorNome(termoBusca);
+                    if (response.data && response.data.length > 0) {
+                        const localidade = response.data[0];
+                        setAreaSugerida(localidade);
+                        setOcorrencia(prev => ({ ...prev, opm_area: localidade.opm }));
+                    } else {
+                        setAreaSugerida(null);
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar área policial:', error);
                     setAreaSugerida(null);
                 }
-            } catch (error) {
-                console.error('Erro ao buscar área policial:', error);
-                setAreaSugerida(null);
-            }
-        }, 500);
-        return () => clearTimeout(handler);
+            }, 500);
+            return () => clearTimeout(handler);
+        }
     }, [ocorrencia.bairro, ocorrencia.cidade]);
 
     const handleInputChange = (e) => {
@@ -86,7 +80,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const handleFileChange = (e) => {
         setFotoFile(e.target.files[0]);
     };
-    
+
     const handleCepBlur = async (e) => {
         const cep = e.target.value.replace(/\D/g, '');
         if (cep.length === 8) {
@@ -245,8 +239,8 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
                     <input style={{flex: 1}} type="text" name="longitude" value={ocorrencia.longitude || ''} onChange={handleInputChange} placeholder="Longitude" />
                 </div>
                 {areaSugerida && (
-                    <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e7f3fe', border: '1px solid #bde5f8', borderRadius: '4px', textAlign: 'left' }}>
-                        <p><strong>OPM Sugerida:</strong> {areaSugerida.opm_nome}</p>
+                    <div className="area-sugerida">
+                        <p><strong>OPM Sugerida:</strong> {areaSugerida.opm_nome} ({areaSugerida.aisp_nome} / {areaSugerida.risp_nome})</p>
                     </div>
                 )}
                 <label>OPM da Área</label>
@@ -275,12 +269,12 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
             </div>
             
             <div className="form-section">
-                 <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                    <input type="checkbox" checked={mostrarSecaoArmas} onChange={handleToggleSecaoArmas} />
-                    Houve apreensão de armas?
-                </label>
+                 <div className="toggle-section">
+                    <input type="checkbox" id="toggle-armas" checked={mostrarSecaoArmas} onChange={handleToggleSecaoArmas} />
+                    <label htmlFor="toggle-armas">Houve apreensão de armas?</label>
+                </div>
                 {mostrarSecaoArmas && (
-                    <>
+                    <div className="conditional-content">
                         <h3>Armas Apreendidas</h3>
                         {ocorrencia.armas_apreendidas.map((arma, index) => (
                             <div key={index} className="dynamic-list-item">
@@ -290,7 +284,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
                             </div>
                         ))}
                         <button type="button" className="add-button" onClick={adicionarArma}>+ Adicionar Arma</button>
-                    </>
+                    </div>
                 )}
             </div>
 
