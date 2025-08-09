@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { getOcorrencias, gerarCadernoPDF, gerarCadernoPorFiltroPDF } from '../api';
 import './OcorrenciaList.css';
 
-// O componente agora recebe 'opms' e 'tiposOcorrencia' como props
 const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, tiposOcorrencia }) => {
     const [ocorrencias, setOcorrencias] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -10,12 +9,10 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
     const [filters, setFilters] = useState({ id: '', opm_area: '', bairro: '', tipo_ocorrencia: '', ano: '', mes: '' });
     const [selectedOcorrencias, setSelectedOcorrencias] = useState([]);
 
-    // O useEffect que buscava os dados dos filtros foi removido, pois agora eles vêm por props.
-
     useEffect(() => {
         const fetchOcorrencias = async () => {
+            setLoading(true);
             try {
-                setLoading(true);
                 const response = await getOcorrencias(filters);
                 setOcorrencias(response.data);
                 setError('');
@@ -42,13 +39,11 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
     };
 
     const handleSelectRow = (id) => {
-        setSelectedOcorrencias(prevSelected => {
-            if (prevSelected.includes(id)) {
-                return prevSelected.filter(item => item !== id);
-            } else {
-                return [...prevSelected, id];
-            }
-        });
+        setSelectedOcorrencias(prevSelected => 
+            prevSelected.includes(id) 
+                ? prevSelected.filter(item => item !== id) 
+                : [...prevSelected, id]
+        );
     };
     
     const handleGerarPDF = async () => {
@@ -115,7 +110,54 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
             {loading ? <p>Carregando ocorrências...</p> : 
              error ? <p style={{ color: 'red' }}>{error}</p> :
             <table className="ocorrencia-table">
-                {/* ... (o resto do seu JSX da tabela permanece igual) ... */}
+                <thead>
+                    <tr>
+                        <th>Sel.</th>
+                        <th>Nº</th>
+                        <th>Tipo</th>
+                        <th>Data do Fato</th>
+                        <th>Bairro</th>
+                        <th>OPM da Área</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {ocorrencias.length > 0 ? ocorrencias.map(ocorrencia => (
+                        <tr 
+                            key={ocorrencia.id} 
+                            onClick={() => onSelectOcorrencia(ocorrencia.id)}
+                            className={selectedOcorrencias.includes(ocorrencia.id) ? 'selected-row' : ''}
+                        >
+                            <td onClick={(e) => e.stopPropagation()}>
+                                <input 
+                                    type="checkbox"
+                                    checked={selectedOcorrencias.includes(ocorrencia.id)}
+                                    onChange={() => handleSelectRow(ocorrencia.id)}
+                                />
+                            </td>
+                            <td>{ocorrencia.id}</td>
+                            <td>{ocorrencia.tipo_ocorrencia_nome}</td>
+                            <td>{new Date(ocorrencia.data_fato).toLocaleDateString('pt-BR')}</td>
+                            <td>{ocorrencia.bairro || 'N/A'}</td>
+                            <td>{ocorrencia.opm_area_nome || 'N/A'}</td>
+                            <td>
+                                <button 
+                                    className="edit-button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEditOcorrencia(ocorrencia);
+                                    }}
+                                >
+                                    Editar
+                                </button>
+                            </td>
+                        </tr>
+                    )) : (
+                        <tr>
+                            <td colSpan="7">Nenhum registro encontrado.</td>
+                        </tr>
+                    )}
+                </tbody>
             </table>
             }
         </div>
