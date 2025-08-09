@@ -12,3 +12,6 @@ django-filter==24.2
 Pillow==10.4.0
 WeasyPrint
 pandas==2.2.2
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
