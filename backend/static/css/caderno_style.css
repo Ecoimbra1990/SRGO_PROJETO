@@ -1,0 +1,85 @@
+/* backend/static/css/caderno_style.css */
+
+@page {
+    size: A4;
+    margin: 1.5cm;
+}
+
+body {
+    font-family: 'Times New Roman', Times, serif; /* Fonte mais clássica para jornais */
+    font-size: 11pt;
+    color: #333;
+    column-count: 2; /* Cria o layout de duas colunas */
+    column-gap: 1.5cm; /* Espaço entre as colunas */
+}
+
+.header, .footer {
+    position: running(header);
+    text-align: center;
+}
+
+.header {
+    top: -1cm;
+    left: 0;
+    right: 0;
+    border-bottom: 2px solid #003366;
+    padding-bottom: 10px;
+}
+
+.logo {
+    width: 2.5cm;
+    vertical-align: middle;
+}
+
+.header-title {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 20px;
+}
+
+.header-title h2, .header-title h3 {
+    margin: 0;
+    color: #003366;
+}
+
+.main-title {
+    column-span: all; /* Faz o título principal ocupar todas as colunas */
+    text-align: center;
+    font-size: 24pt;
+    font-weight: bold;
+    margin-bottom: 1cm;
+    color: #003366;
+}
+
+.ocorrencia-block {
+    break-inside: avoid; /* Evita que uma ocorrência seja dividida entre colunas ou páginas */
+    padding: 0.5cm;
+    margin-bottom: 1cm;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+}
+
+.ocorrencia-title {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #d1a10d;
+    margin-bottom: 0.5cm;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #003366;
+}
+
+.description {
+    margin-top: 0.5cm;
+    text-align: justify;
+    line-height: 1.4;
+}
+
+.ocorrencia-image {
+    max-width: 100%;
+    height: auto;
+    margin-top: 10px;
+    border-radius: 4px;
+}
