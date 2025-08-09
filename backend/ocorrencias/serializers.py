@@ -78,7 +78,6 @@ class ArmaApreendidaSerializer(serializers.ModelSerializer):
         fields = ['id', 'tipo', 'marca', 'modelo', 'calibre', 'numero_serie', 'observacoes', 'modelo_catalogado']
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    # Campos aninhados são lidos da base de dados, mas escritos via `create`/`update`
     envolvidos = PessoaEnvolvidaSerializer(many=True, read_only=True)
     armas_apreendidas = ArmaApreendidaSerializer(many=True, read_only=True)
     
@@ -91,7 +90,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
     tipo_homicidio_nome = serializers.CharField(source='tipo_homicidio.nome', read_only=True, allow_null=True)
     
-    # Campo para receber o ficheiro no upload, mas não é guardado diretamente no modelo
+    # Este campo é usado para receber o ficheiro do frontend, mas não é guardado no modelo.
     foto_ocorrencia_upload = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
@@ -121,7 +120,6 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         return None
 
     def _handle_nested_data(self, request_data, field_name):
-        """Função auxiliar para processar dados aninhados que chegam como JSON string."""
         field_data = request_data.get(field_name)
         if field_data and isinstance(field_data, str):
             try:
@@ -131,13 +129,17 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         return field_data if field_data else []
 
     def create(self, validated_data):
-        foto_file = validated_data.pop('foto_ocorrencia_upload', None)
+        request = self.context.get('request')
+        foto_file = request.FILES.get('foto_ocorrencia_upload', None)
+        
+        # Remove o campo do dicionário para não tentar salvá-lo no modelo
+        validated_data.pop('foto_ocorrencia_upload', None)
+
         if foto_file:
             foto_url = upload_to_drive(foto_file)
             if foto_url:
                 validated_data['foto_ocorrencia'] = foto_url
         
-        request = self.context.get('request')
         envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
         armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
 
@@ -153,16 +155,21 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         return ocorrencia
 
     def update(self, instance, validated_data):
-        foto_file = validated_data.pop('foto_ocorrencia_upload', None)
+        request = self.context.get('request')
+        # CORREÇÃO: Obter o ficheiro diretamente do objeto 'request.FILES'
+        foto_file = request.FILES.get('foto_ocorrencia_upload', None)
+        
+        validated_data.pop('foto_ocorrencia_upload', None)
+
         if foto_file:
             foto_url = upload_to_drive(foto_file)
             if foto_url:
-                instance.foto_ocorrencia = foto_url
+                instance.foto_ocorrencia = foto_url # Atribui o novo URL à instância
 
-        request = self.context.get('request')
         envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
         armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
 
+        # Atualiza os outros campos do modelo
         instance = super().update(instance, validated_data)
         
         instance.envolvidos.all().delete()
@@ -174,6 +181,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         for arma_data in armas_data:
             ArmaApreendida.objects.create(ocorrencia=instance, **arma_data)
             
+        instance.save() # Salva as alterações, incluindo o novo URL da imagem
         return instance
 
 class UserRegistrationSerializer(serializers.Serializer):
