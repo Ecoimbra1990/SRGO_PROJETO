@@ -5,20 +5,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import *
 from .serializers import *
 
-# Imports para a nova funcionalidade de PDF com WeasyPrint
+# Imports para a nova funcionalidade de PDF
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.template.loader import get_template
-from weasyprint import HTML
-from django.contrib.staticfiles.finders import find
+from weasyprint import HTML, CSS
+from django.conf import settings # Importa as configurações
 
-# Outros imports para o Dashboard
 import pandas as pd
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
-# --- VIEW PARA GERAR O PDF (REESCRITA COM WeasyPrint) ---
+# --- VIEW PARA GERAR O PDF (REESCRITA E CORRIGIDA) ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -29,20 +28,17 @@ class GerarCadernoPDFView(APIView):
 
         ocorrencias = Ocorrencia.objects.filter(id__in=ocorrencia_ids).order_by('-data_fato')
         
-        # Converte os caminhos das imagens para um formato que o WeasyPrint entende
-        coppm_logo_path = f"file://{find('assets/coppm.png')}"
-        pmba_logo_path = f"file://{find('assets/pmba.png')}"
-        
         context = {
             'ocorrencias': ocorrencias,
-            'coppm_logo_path': coppm_logo_path,
-            'pmba_logo_path': pmba_logo_path
         }
         
         template = get_template('caderno_template.html')
         html = template.render(context)
         
-        pdf_file = HTML(string=html).write_pdf()
+        # Constrói a URL base a partir da requisição
+        base_url = request.build_absolute_uri('/')
+        
+        pdf_file = HTML(string=html, base_url=base_url).write_pdf()
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
