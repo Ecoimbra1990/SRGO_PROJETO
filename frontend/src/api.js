@@ -33,7 +33,6 @@ export const getOcorrencias = (filters = {}) => {
 export const getOcorrencia = (id) => api.get(`/api/ocorrencias/${id}/`);
 export const createOcorrencia = (ocorrencia) => api.post('/api/ocorrencias/', ocorrencia);
 export const updateOcorrencia = (id, ocorrencia) => api.put(`/api/ocorrencias/${id}/`, ocorrencia);
-// --- ADICIONADO: Função específica para PATCH ---
 export const patchOcorrencia = (id, ocorrencia) => api.patch(`/api/ocorrencias/${id}/`, ocorrencia);
 export const deleteOcorrencia = (id) => api.delete(`/api/ocorrencias/${id}/`);
 
@@ -52,8 +51,12 @@ export const gerarCadernoPDF = (ocorrencia_ids) => {
         responseType: 'blob',
     });
 };
+
+// --- FUNÇÃO CORRIGIDA ---
 export const gerarCadernoPorFiltroPDF = (filters) => {
-    return api.post('/api/gerar-caderno-por-filtro/', { filtros }, {
+    // A correção está aqui: o objeto enviado é { filtros: filters }
+    // para corresponder ao que o backend espera.
+    return api.post('/api/gerar-caderno-por-filtro/', { filtros: filters }, {
         responseType: 'blob',
     });
 };
