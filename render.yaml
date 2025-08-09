@@ -28,7 +28,7 @@ services:
     plan: free
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    publishPath: "build"
+    publishDir: "build"
     routes:
       - type: rewrite
         source: /*
