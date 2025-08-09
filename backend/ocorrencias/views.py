@@ -10,63 +10,51 @@ from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from io import BytesIO
-from reportlab.pdfgen import canvas
-from reportlab.lib import pagesizes
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
-from reportlab.platypus import Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_RIGHT
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib import colors
 import pandas as pd
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 from django.contrib.staticfiles.finders import find
 
-# --- HELPER PARA O CABEÇALHO E RODAPÉ DO PDF ---
-class PageNumCanvas(canvas.Canvas):
-    def __init__(self, *args, **kwargs):
-        canvas.Canvas.__init__(self, *args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_number(num_pages)
-            canvas.Canvas.showPage(self)
-        canvas.Canvas.save(self)
-
-    def draw_page_number(self, page_count):
-        self.setFont("Helvetica", 9)
-        self.drawRightString(20*cm, 1.5*cm, f"Página {self._pageNumber} de {page_count}")
-
-# --- VIEW PRINCIPAL PARA GERAR O PDF ---
+# --- VIEW PRINCIPAL PARA GERAR O PDF (REESCRITA COM SimpleDocTemplate) ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def draw_header(self, canvas, width):
+    # Função para o cabeçalho em cada página
+    def header(self, canvas, doc):
+        canvas.saveState()
+        width, height = doc.pagesize
+        
         coppm_logo_path = find('assets/coppm.png')
         pmba_logo_path = find('assets/pmba.png')
-        
-        if coppm_logo_path:
-            logo_coppm = Image(coppm_logo_path, width=2.5*cm, height=2.5*cm)
-            logo_coppm.drawOn(canvas, 1.5*cm, 26*cm)
 
+        if coppm_logo_path:
+            canvas.drawImage(coppm_logo_path, 1.5*cm, height - 3*cm, width=2.5*cm, height=2.5*cm, preserveAspectRatio=True, mask='auto')
+        
         if pmba_logo_path:
-            logo_pmba = Image(pmba_logo_path, width=2.5*cm, height=2.5*cm)
-            logo_pmba.drawOn(canvas, width - 4*cm, 26*cm)
+            canvas.drawImage(pmba_logo_path, width - 4*cm, height - 3*cm, width=2.5*cm, height=2.5*cm, preserveAspectRatio=True, mask='auto')
 
         canvas.setFont("Helvetica-Bold", 14)
-        canvas.drawCentredString(width / 2.0, 27.5*cm, "GOVERNO DO ESTADO DA BAHIA")
+        canvas.drawCentredString(width / 2.0, height - 1.5*cm, "GOVERNO DO ESTADO DA BAHIA")
         canvas.setFont("Helvetica-Bold", 12)
-        canvas.drawCentredString(width / 2.0, 26.8*cm, "POLÍCIA MILITAR DA BAHIA")
+        canvas.drawCentredString(width / 2.0, height - 2.2*cm, "POLÍCIA MILITAR DA BAHIA")
         canvas.setFont("Helvetica", 11)
-        canvas.drawCentredString(width / 2.0, 26.1*cm, "Comando de Operações Policiais Militares - COPPM")
-        canvas.line(1.5*cm, 25.8*cm, width - 1.5*cm, 25.8*cm)
+        canvas.drawCentredString(width / 2.0, height - 2.9*cm, "Comando de Operações Policiais Militares - COPPM")
+        
+        canvas.line(1.5*cm, height - 3.2*cm, width - 1.5*cm, height - 3.2*cm)
+        canvas.restoreState()
+
+    # Função para o rodapé em cada página
+    def footer(self, canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica', 9)
+        canvas.drawRightString(20*cm, 1.5*cm, f"Página {doc.page}")
+        canvas.restoreState()
 
     def post(self, request, *args, **kwargs):
         ocorrencia_ids = request.data.get('ocorrencia_ids', [])
@@ -76,52 +64,36 @@ class GerarCadernoPDFView(APIView):
         ocorrencias = Ocorrencia.objects.filter(id__in=ocorrencia_ids).order_by('-data_fato')
 
         buffer = BytesIO()
-        p = PageNumCanvas(buffer, pagesize=pagesizes.A4)
-        width, height = pagesizes.A4
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=4*cm, bottomMargin=2.5*cm, leftMargin=1.5*cm, rightMargin=1.5*cm)
         
         styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY, fontSize=10, leading=14))
-        styles.add(ParagraphStyle(name='H1', fontSize=14, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=10))
-        styles.add(ParagraphStyle(name='H2', fontSize=11, fontName='Helvetica-Bold', spaceBefore=8, spaceAfter=4))
+        styles.add(ParagraphStyle(name='H1', fontSize=16, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=20))
+        styles.add(ParagraphStyle(name='H2', fontSize=11, fontName='Helvetica-Bold', spaceBefore=12, spaceAfter=6, textColor=colors.darkblue))
         styles.add(ParagraphStyle(name='TableHeader', fontSize=9, fontName='Helvetica-Bold'))
         styles.add(ParagraphStyle(name='TableBody', fontSize=9, fontName='Helvetica'))
         
-        y_position = height - 4.5*cm
+        story = [Paragraph("CADERNO INFORMATIVO DE OCORRÊNCIAS", styles['H1'])]
 
-        for i, ocorrencia in enumerate(ocorrencias):
-            story = []
+        for ocorrencia in ocorrencias:
+            story.append(Spacer(1, 1*cm))
+            
             tipo_ocorrencia_str = ocorrencia.tipo_ocorrencia.nome.upper() if ocorrencia.tipo_ocorrencia else "NÃO ESPECIFICADO"
-            story.append(Paragraph(f"<b>OCORRÊNCIA Nº {ocorrencia.id} - {tipo_ocorrencia_str}</b>", styles['H2']))
+            story.append(Paragraph(f"OCORRÊNCIA Nº {ocorrencia.id} - {tipo_ocorrencia_str}", styles['H2']))
+
             data = [
                 [Paragraph('<b>Data/Hora do Fato:</b>', styles['TableHeader']), Paragraph(ocorrencia.data_fato.strftime('%d/%m/%Y %H:%M'), styles['TableBody'])],
-                [Paragraph('<b>Local:</b>', styles['TableHeader']), Paragraph(f"{ocorrencia.cidade} / {ocorrencia.bairro}", styles['TableBody'])],
+                [Paragraph('<b>Local:</b>', styles['TableHeader']), Paragraph(f"{ocorrencia.cidade or ''} / {ocorrencia.bairro or ''}", styles['TableBody'])],
                 [Paragraph('<b>RISP / AISP / OPM:</b>', styles['TableHeader']), Paragraph(f"{ocorrencia.risp_area.nome if ocorrencia.risp_area else ''} / {ocorrencia.aisp_area.nome if ocorrencia.aisp_area else ''} / {ocorrencia.opm_area.nome if ocorrencia.opm_area else ''}", styles['TableBody'])],
             ]
-            table = Table(data, colWidths=[4*cm, 14*cm])
+            table = Table(data, colWidths=[4*cm, 13.5*cm])
             story.append(table)
             story.append(Spacer(1, 0.4*cm))
+            
             story.append(Paragraph("<b>DESCRIÇÃO DO FATO:</b>", styles['TableHeader']))
             story.append(Paragraph(ocorrencia.descricao_fato.replace('\n', '<br/>'), styles['Justify']))
-            total_height = sum([s.wrapOn(p, width - 3*cm, height)[1] for s in story]) + 2*cm
-            
-            if y_position - total_height < 3*cm:
-                self.draw_header(p, width)
-                p.showPage()
-                y_position = height - 4.5*cm
 
-            if i == 0:
-                p.setFont("Helvetica-Bold", 16)
-                p.drawCentredString(width / 2.0, 25*cm, "CADERNO INFORMATIVO DE OCORRÊNCIAS")
-
-            self.draw_header(p, width)
-            for item in story:
-                h = item.wrapOn(p, width - 3*cm, height)[1]
-                item.drawOn(p, 1.5*cm, y_position - h)
-                y_position -= h
-            y_position -= 1.5*cm
-            p.line(1.5*cm, y_position + 0.7*cm, width - 1.5*cm, y_position + 0.7*cm)
-
-        p.save()
+        doc.build(story, onFirstPage=self.header, onLaterPages=self.header, canvasmaker=PageNumCanvas)
         
         pdf = buffer.getvalue()
         buffer.close()
