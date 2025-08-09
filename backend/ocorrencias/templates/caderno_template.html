@@ -6,24 +6,113 @@
         @page {
             size: A4;
             margin: 1.5cm;
-            @frame header { -pdf-frame-content: page-header; top: 1cm; left: 1.5cm; right: 1.5cm; height: 3.5cm; }
-            @frame footer { -pdf-frame-content: page-footer; bottom: 1cm; left: 1.5cm; right: 1.5cm; height: 1cm; }
+            @frame header {
+                -pdf-frame-content: page-header;
+                top: 1cm;
+                left: 1.5cm;
+                right: 1.5cm;
+                height: 3.5cm;
+            }
+            @frame footer {
+                -pdf-frame-content: page-footer;
+                bottom: 1cm;
+                left: 1.5cm;
+                right: 1.5cm;
+                height: 1cm;
+            }
         }
-        body { font-family: 'Helvetica', sans-serif; font-size: 10pt; }
-        .header-table { width: 100%; border: 0; }
-        .header-table td { vertical-align: middle; }
-        .logo { width: 2.5cm; }
-        .header-title { text-align: center; }
-        .header-title h2, .header-title h3, .header-title h4 { margin: 2px 0; }
-        .footer-content { text-align: right; font-size: 9pt; }
-        .main-title { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 1.5cm; }
-        .ocorrencia-block { margin-bottom: 1.5cm; page-break-inside: avoid; }
-        .ocorrencia-title { font-size: 11pt; font-weight: bold; background-color: #f2f2f2; padding: 5px; border: 1px solid #ccc; }
-        .info-table { width: 100%; margin-top: 0.5cm; border-collapse: collapse; }
-        .info-table td { padding: 4px; border: 1px solid #ddd; }
-        .info-table .label { font-weight: bold; width: 3.5cm; }
-        .description { margin-top: 0.5cm; text-align: justify; }
-        .ocorrencia-image { max-width: 100%; height: auto; margin-top: 10px; border: 1px solid #ccc; }
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+        .header-table {
+            width: 100%;
+            border: 0;
+        }
+        .header-table td {
+            vertical-align: middle;
+        }
+        .logo {
+            width: 2.5cm;
+        }
+        .header-title {
+            text-align: center;
+        }
+        .header-title h2 {
+            font-size: 14pt;
+            color: #003366; /* Azul PMBA */
+            margin: 0;
+        }
+        .header-title h3 {
+            font-size: 12pt;
+            color: #555;
+            margin: 2px 0;
+        }
+        .header-title h4 {
+            font-size: 10pt;
+            color: #777;
+            margin: 2px 0;
+        }
+        .footer-content {
+            text-align: right;
+            font-size: 9pt;
+            color: #777;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #003366;
+        }
+        .main-title {
+            font-size: 18pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1.5cm;
+            color: #003366;
+        }
+        .ocorrencia-block {
+            margin-bottom: 1.5cm;
+            page-break-inside: avoid;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 0.5cm;
+        }
+        .ocorrencia-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #d1a10d; /* Dourado PMBA */
+            border-bottom: 2px solid #003366;
+            padding-bottom: 5px;
+            margin-bottom: 0.5cm;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 5px;
+            font-size: 9.5pt;
+        }
+        .info-table .label {
+            font-weight: bold;
+            width: 3.5cm;
+            color: #003366;
+        }
+        .description {
+            margin-top: 0.5cm;
+            text-align: justify;
+            line-height: 1.4;
+        }
+        .description p {
+            margin: 0;
+        }
+        .ocorrencia-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -32,9 +121,8 @@
             <tr>
                 <td style="width: 2.5cm;"><img src="/static/assets/coppm.png" class="logo"></td>
                 <td class="header-title">
-                    <h2>GOVERNO DO ESTADO DA BAHIA</h2>
-                    <h3>POLÍCIA MILITAR DA BAHIA</h3>
-                    <h4>Comando de Operações Policiais Militares - COPPM</h4>
+                    <h2>POLÍCIA MILITAR DA BAHIA</h2>
+                    <h3>Comando de Operações Policiais Militares - COPPM</h3>
                 </td>
                 <td style="width: 2.5cm; text-align: right;"><img src="/static/assets/pmba.png" class="logo"></td>
             </tr>
@@ -43,7 +131,7 @@
     </div>
 
     <div id="page-footer">
-        <p class="footer-content">Página <pdf:pagenumber> de <pdf:pagecount></p>
+        <p class="footer-content">PMBA, uma Força a serviço do cidadão! | Página <pdf:pagenumber></p>
     </div>
 
     <div class="main-title">CADERNO INFORMATIVO DE OCORRÊNCIAS</div>
