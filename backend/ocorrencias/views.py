@@ -5,19 +5,21 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import *
 from .serializers import *
 
-# Imports para a nova funcionalidade de PDF
+# Imports para a nova funcionalidade de PDF com WeasyPrint
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.template.loader import get_template
-from weasyprint import HTML, CSS
-from django.conf import settings # Importa as configurações
+from weasyprint import HTML
+from django.conf import settings
+from django.contrib.staticfiles.finders import find
 
+# Outros imports para o Dashboard
 import pandas as pd
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
-# --- VIEW PARA GERAR O PDF (REESCRITA E CORRIGIDA) ---
+# --- VIEW PARA GERAR O PDF (REESCRITA COM WeasyPrint) ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -35,7 +37,7 @@ class GerarCadernoPDFView(APIView):
         template = get_template('caderno_template.html')
         html = template.render(context)
         
-        # Constrói a URL base a partir da requisição
+        # Constrói a URL base a partir da requisição para que o WeasyPrint encontre os ficheiros estáticos e de média
         base_url = request.build_absolute_uri('/')
         
         pdf_file = HTML(string=html, base_url=base_url).write_pdf()
@@ -49,6 +51,7 @@ class DashboardAnalyticsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request, *args, **kwargs):
         queryset = Ocorrencia.objects.all()
+        # ... (código do dashboard)
         heatmap_data = list(queryset.exclude(latitude__isnull=True, longitude__isnull=True).values('latitude', 'longitude'))
         ocorrencias_por_mes = queryset.annotate(month=TruncMonth('data_fato')).values('month').annotate(count=Count('id')).order_by('month')
         top_tipos = list(queryset.values('tipo_ocorrencia__nome').annotate(count=Count('id')).order_by('-count')[:5])
