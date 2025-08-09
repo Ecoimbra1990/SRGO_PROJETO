@@ -1,33 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import OcorrenciaList from './OcorrenciaList';
 import OcorrenciaDetail from './OcorrenciaDetail';
 import OcorrenciaForm from './OcorrenciaForm';
+import { getOPMs, getTiposOcorrencia, getOrganizacoes, getCadernos, getModalidadesCrime } from '../api';
 
 const Home = () => {
     const [selectedOcorrenciaId, setSelectedOcorrenciaId] = useState(null);
     const [editingOcorrencia, setEditingOcorrencia] = useState(null);
     const [refreshList, setRefreshList] = useState(false);
+    
+    // Novo estado para guardar os dados dos dropdowns
+    const [lookupData, setLookupData] = useState({
+        opms: [],
+        tiposOcorrencia: [],
+        organizacoes: [],
+        cadernos: [],
+        modalidadesCrime: [],
+        loading: true // Estado de carregamento para os dados
+    });
+
+    // useEffect para carregar todos os dados uma única vez
+    useEffect(() => {
+        const fetchLookupData = async () => {
+            try {
+                const [opmsRes, tiposRes, orgsRes, cadernosRes, modalidadesRes] = await Promise.all([
+                    getOPMs(),
+                    getTiposOcorrencia(),
+                    getOrganizacoes(),
+                    getCadernos(),
+                    getModalidadesCrime()
+                ]);
+                setLookupData({
+                    opms: opmsRes.data || [],
+                    tiposOcorrencia: tiposRes.data || [],
+                    organizacoes: orgsRes.data || [],
+                    cadernos: cadernosRes.data || [],
+                    modalidadesCrime: modalidadesRes.data || [],
+                    loading: false
+                });
+            } catch (error) {
+                console.error('Erro fatal ao carregar dados da aplicação:', error);
+                setLookupData(prev => ({ ...prev, loading: false }));
+            }
+        };
+        fetchLookupData();
+    }, []);
 
     const handleSelectOcorrencia = (id) => {
         setSelectedOcorrenciaId(id);
-        setEditingOcorrencia(null); // Garante que o form não esteja em modo de edição
+        setEditingOcorrencia(null);
     };
 
     const handleEditOcorrencia = (ocorrencia) => {
         setEditingOcorrencia(ocorrencia);
-        setSelectedOcorrenciaId(null); // Garante que a visualização de detalhes seja fechada
+        setSelectedOcorrenciaId(null);
     };
 
     const handleFormSuccess = () => {
         setEditingOcorrencia(null);
         setSelectedOcorrenciaId(null);
-        setRefreshList(prev => !prev); // Alterna o estado para forçar a atualização da lista
+        setRefreshList(prev => !prev);
     };
 
     const handleNewOcorrencia = () => {
-        setEditingOcorrencia({}); // Objeto vazio para indicar criação
+        setEditingOcorrencia({});
         setSelectedOcorrenciaId(null);
     };
+
+    // Exibe uma mensagem de carregamento global enquanto os dados essenciais não estiverem prontos
+    if (lookupData.loading) {
+        return <p>Carregando dados da aplicação...</p>;
+    }
 
     return (
         <>
@@ -40,11 +83,21 @@ const Home = () => {
                         onSelectOcorrencia={handleSelectOcorrencia}
                         onEditOcorrencia={handleEditOcorrencia}
                         refresh={refreshList}
+                        // Passa os dados necessários como props
+                        opms={lookupData.opms}
+                        tiposOcorrencia={lookupData.tiposOcorrencia}
                     />
                 </div>
                 <div className="details-container">
                     {selectedOcorrenciaId && <OcorrenciaDetail ocorrenciaId={selectedOcorrenciaId} />}
-                    {editingOcorrencia && <OcorrenciaForm existingOcorrencia={editingOcorrencia} onSuccess={handleFormSuccess} />}
+                    {editingOcorrencia && (
+                        <OcorrenciaForm 
+                            existingOcorrencia={editingOcorrencia} 
+                            onSuccess={handleFormSuccess}
+                            // Passa todos os dados necessários como props
+                            lookupData={lookupData}
+                        />
+                    )}
                 </div>
             </div>
         </>
