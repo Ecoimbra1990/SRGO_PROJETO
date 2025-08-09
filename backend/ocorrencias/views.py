@@ -19,6 +19,18 @@ import pandas as pd
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
+def get_asset_path(asset_name):
+    """Função auxiliar para encontrar caminhos de ficheiros estáticos de forma fiável."""
+    # O STATIC_ROOT é o diretório onde o 'collectstatic' coloca todos os ficheiros em produção.
+    path = os.path.join(settings.STATIC_ROOT, asset_name)
+    if os.path.exists(path):
+        return f'file://{path}'
+    # Fallback para o ambiente de desenvolvimento
+    path = os.path.join(settings.BASE_DIR, 'static', asset_name)
+    if os.path.exists(path):
+        return f'file://{path}'
+    return ''
+
 # --- VIEW PARA GERAR O PDF (BASEADO EM SELEÇÃO) ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -30,33 +42,30 @@ class GerarCadernoPDFView(APIView):
 
         ocorrencias = Ocorrencia.objects.filter(id__in=ocorrencia_ids).order_by('-data_fato')
         
-        context = { 'ocorrencias': ocorrencias }
+        context = { 
+            'ocorrencias': ocorrencias,
+            'logo_coppm_path': get_asset_path('assets/coppm.png'),
+            'logo_pmba_path': get_asset_path('assets/pmba.png'),
+        }
         
         template = get_template('caderno_template.html')
         html = template.render(context)
         
-        # Carrega o CSS diretamente do sistema de arquivos
-        css_path = os.path.join(settings.STATIC_ROOT, 'css', 'caderno_style.css')
-        if not os.path.exists(css_path):
-             # Fallback para desenvolvimento local onde collectstatic pode não ter sido executado
-             css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'caderno_style.css')
-
-        css = CSS(filename=css_path)
+        css_path = get_asset_path('css/caderno_style.css').replace('file://', '')
+        css = CSS(filename=css_path) if css_path else None
         
-        # Passa o BASE_DIR para o WeasyPrint saber onde encontrar os arquivos locais
-        pdf_file = HTML(string=html, base_url=str(settings.BASE_DIR)).write_pdf(stylesheets=[css])
+        pdf_file = HTML(string=html).write_pdf(stylesheets=[css] if css else [])
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
         return response
 
-# --- VIEW PARA GERAR PDF (BASEADO EM FILTROS) ---
+# --- NOVA VIEW PARA GERAR PDF (BASEADO EM FILTROS) ---
 class GerarCadernoPorFiltroPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         filtros = request.data.get('filtros', {})
-        
         queryset = Ocorrencia.objects.all()
 
         if filtros.get('id'):
@@ -77,23 +86,24 @@ class GerarCadernoPorFiltroPDFView(APIView):
         if not ocorrencias_filtradas.exists():
             return Response({"error": "Nenhuma ocorrência encontrada para os filtros aplicados."}, status=404)
 
-        context = { 'ocorrencias': ocorrencias_filtradas }
+        context = { 
+            'ocorrencias': ocorrencias_filtradas,
+            'logo_coppm_path': get_asset_path('assets/coppm.png'),
+            'logo_pmba_path': get_asset_path('assets/pmba.png'),
+        }
         template = get_template('caderno_template.html')
         html = template.render(context)
 
-        css_path = os.path.join(settings.STATIC_ROOT, 'css', 'caderno_style.css')
-        if not os.path.exists(css_path):
-             css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'caderno_style.css')
+        css_path = get_asset_path('css/caderno_style.css').replace('file://', '')
+        css = CSS(filename=css_path) if css_path else None
         
-        css = CSS(filename=css_path)
-        
-        pdf_file = HTML(string=html, base_url=str(settings.BASE_DIR)).write_pdf(stylesheets=[css])
+        pdf_file = HTML(string=html).write_pdf(stylesheets=[css] if css else [])
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo_filtrado.pdf"'
         return response
 
-# --- ViewSets existentes ---
+# --- ViewSets existentes (sem alterações) ---
 class DashboardAnalyticsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request, *args, **kwargs):
