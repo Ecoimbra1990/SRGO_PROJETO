@@ -85,7 +85,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
 
     const handleGerarPDFPorFiltro = async () => {
         try {
-            // Passa o objeto de filtros atual para a API
+            // Passa o objeto de filtros (state) para a função da API
             const response = await gerarCadernoPorFiltroPDF(filters);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
@@ -120,7 +120,6 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 <button onClick={handleGerarPDF} className="pdf-button" disabled={selectedOcorrencias.length === 0}>
                     Gerar Caderno ({selectedOcorrencias.length})
                 </button>
-                {/* Novo botão para gerar por filtro */}
                 <button onClick={handleGerarPDFPorFiltro} className="pdf-button">
                     Gerar por Filtro
                 </button>
