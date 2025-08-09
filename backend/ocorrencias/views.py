@@ -6,7 +6,6 @@ from .serializers import *
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from io import BytesIO
 from django.template.loader import get_template
 from weasyprint import HTML
 from django.conf import settings
