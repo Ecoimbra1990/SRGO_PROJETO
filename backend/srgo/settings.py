@@ -7,7 +7,7 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-default-secret-key')
-DEBUG = os.environ.get('DEBUG', 'False') == 'True' # Modificado para ser False por padrão em produção
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
 
 INSTALLED_APPS = [
@@ -22,7 +22,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware', # Posição correta
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -73,13 +73,32 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # 2. Domínios confiáveis para requisições que alteram o estado (POST, PUT, DELETE)
-#    Adicionar a URL do seu frontend aqui é crucial.
 CSRF_TRUSTED_ORIGINS = [
     "https://srgo-frontend.onrender.com",
     "http://localhost:3000",
 ]
 
-# 3. (Opcional, mas recomendado) Garante que o frontend pode enviar o token de autenticação
-CORS_ALLOW_CREDENTIALS = True
+# 3. Métodos HTTP permitidos
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# 4. Cabeçalhos HTTP permitidos
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=60), "REFRESH_TOKEN_LIFETIME": timedelta(days=1)}
