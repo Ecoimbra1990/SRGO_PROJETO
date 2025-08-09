@@ -69,8 +69,8 @@ class PessoaEnvolvidaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PessoaEnvolvida
         fields = [
-            'id', 'nome', 'sexo', 'status', 'tipo_documento', 'documento', 
-            'tipo_envolvimento', 'observacoes', 'organizacao_criminosa', 
+            'id', 'nome', 'sexo', 'status', 'tipo_documento', 'documento',
+            'tipo_envolvimento', 'observacoes', 'organizacao_criminosa',
             'organizacao_criminosa_nome', 'procedimentos'
         ]
 
@@ -83,7 +83,7 @@ class ArmaApreendidaSerializer(serializers.ModelSerializer):
 class OcorrenciaSerializer(serializers.ModelSerializer):
     envolvidos = PessoaEnvolvidaSerializer(many=True, read_only=True)
     armas_apreendidas = ArmaApreendidaSerializer(many=True, read_only=True)
-    
+
     usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
     usuario_registro_nome_completo = serializers.SerializerMethodField()
     opm_area_nome = serializers.CharField(source='opm_area.nome', read_only=True, allow_null=True)
@@ -92,13 +92,13 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     tipo_ocorrencia_nome = serializers.CharField(source='tipo_ocorrencia.nome', read_only=True, allow_null=True)
     caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
     tipo_homicidio_nome = serializers.CharField(source='tipo_homicidio.nome', read_only=True, allow_null=True)
-    
+
     foto_ocorrencia_upload = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = Ocorrencia
         fields = [
-            'id', 'tipo_ocorrencia', 'tipo_ocorrencia_nome', 
+            'id', 'tipo_ocorrencia', 'tipo_ocorrencia_nome',
             'caderno_informativo', 'caderno_informativo_nome',
             'opm_area', 'opm_area_nome', 'aisp_area', 'aisp_area_nome',
             'risp_area', 'risp_area_nome', 'tipo_homicidio', 'tipo_homicidio_nome',
@@ -147,7 +147,9 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         ocorrencia = Ocorrencia.objects.create(**validated_data)
 
         for envolvido_data in envolvidos_data:
+            envolvido_data.pop('procedimentos', None)
             PessoaEnvolvida.objects.create(ocorrencia=ocorrencia, **envolvido_data)
+        
         for arma_data in armas_data:
             ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
         
@@ -172,6 +174,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         if 'envolvidos' in request.data:
             instance.envolvidos.all().delete()
             for envolvido_data in envolvidos_data:
+                envolvido_data.pop('procedimentos', None)
                 PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
 
         if 'armas_apreendidas' in request.data:
