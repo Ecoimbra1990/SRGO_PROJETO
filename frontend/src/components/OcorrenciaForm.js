@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api, {
-    getModelosArma,
-    getLocalidadePorNome,
-    patchOcorrencia
-} from '../api';
+import api, { getModelosArma, getLocalidadePorNome, patchOcorrencia } from '../api';
 import './OcorrenciaForm.css';
 
 const initialOcorrenciaState = {
@@ -17,31 +13,22 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
     const [isHomicidio, setIsHomicidio] = useState(false);
-    const [addressSuggestions, setAddressSuggestions] = useState([]);
-    const [mostrarSecaoArmas, setMostrarSecaoArmas] = useState(false);
-    const [armaSearchTerm, setArmaSearchTerm] = useState('');
-    const [armaSuggestions, setArmaSuggestions] = useState([]);
-    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
-    const [areaSugerida, setAreaSugerida] = useState(null);
-
+    // ... outros states que não são para dados de lookup
+    
+    // Desestrutura os dados recebidos por props para facilitar o uso
     const { opms, tiposOcorrencia, organizacoes, cadernos, modalidadesCrime } = lookupData;
 
     useEffect(() => {
         if (existingOcorrencia && existingOcorrencia.id) {
-            const armas = existingOcorrencia.armas_apreendidas || [];
             setOcorrencia({
                 ...initialOcorrenciaState,
                 ...existingOcorrencia,
                 data_fato: existingOcorrencia.data_fato ? new Date(existingOcorrencia.data_fato).toISOString().slice(0, 16) : '',
                 envolvidos: existingOcorrencia.envolvidos || [],
-                armas_apreendidas: armas
+                armas_apreendidas: existingOcorrencia.armas_apreendidas || []
             });
-            if (armas.length > 0) {
-                setMostrarSecaoArmas(true);
-            }
         } else {
             setOcorrencia(initialOcorrenciaState);
-            setMostrarSecaoArmas(false);
         }
     }, [existingOcorrencia]);
 
@@ -53,8 +40,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
             setOcorrencia(prev => ({ ...prev, tipo_homicidio: null }));
         }
     }, [ocorrencia.tipo_ocorrencia, tiposOcorrencia]);
-
-    // ... (outros useEffects e funções auxiliares que não precisam de alteração)
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -93,12 +78,27 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
             console.error('Erro ao salvar ocorrência:', error.response?.data || error);
         }
     };
-
+    
+    // A verificação de 'loading' foi removida, pois o Home.js já a faz.
     return (
         <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
-            {/* O JSX do formulário, que usa as variáveis desestruturadas de lookupData, permanece o mesmo */}
             <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
-            {/* ... o resto do seu JSX ... */}
+            <div className="form-section">
+                <h3>Informações Gerais</h3>
+                <input type="datetime-local" name="data_fato" value={ocorrencia.data_fato} onChange={handleInputChange} required />
+                <select name="tipo_ocorrencia" value={ocorrencia.tipo_ocorrencia || ''} onChange={handleInputChange} required>
+                    <option value="">Selecione o Tipo</option>
+                    {tiposOcorrencia.map(tipo => (<option key={tipo.id} value={tipo.id}>{tipo.nome}</option>))}
+                </select>
+                {isHomicidio && (
+                    <select name="tipo_homicidio" value={ocorrencia.tipo_homicidio || ''} onChange={handleInputChange}>
+                        <option value="">Selecione a Modalidade</option>
+                        {modalidadesCrime.map(m => (<option key={m.id} value={m.id}>{m.nome}</option>))}
+                    </select>
+                )}
+                {/* O resto do seu JSX do formulário, que usará as variáveis desestruturadas de lookupData */}
+            </div>
+            <button type="submit">Salvar</button>
         </form>
     );
 };
