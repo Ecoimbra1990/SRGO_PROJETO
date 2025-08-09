@@ -33,6 +33,8 @@ export const getOcorrencias = (filters = {}) => {
 export const getOcorrencia = (id) => api.get(`/api/ocorrencias/${id}/`);
 export const createOcorrencia = (ocorrencia) => api.post('/api/ocorrencias/', ocorrencia);
 export const updateOcorrencia = (id, ocorrencia) => api.put(`/api/ocorrencias/${id}/`, ocorrencia);
+// --- ADICIONADO: Função específica para PATCH ---
+export const patchOcorrencia = (id, ocorrencia) => api.patch(`/api/ocorrencias/${id}/`, ocorrencia);
 export const deleteOcorrencia = (id) => api.delete(`/api/ocorrencias/${id}/`);
 
 // Lookups
@@ -44,19 +46,14 @@ export const getModelosArma = (search = '') => api.get(`/api/modelos-arma/?searc
 export const getLocalidadePorNome = (search = '') => api.get(`/api/localidades/?search=${search}`);
 export const getModalidadesCrime = () => api.get('/api/modalidades-crime/');
 
-// --- FUNÇÃO PARA GERAR O PDF (POR SELEÇÃO) ---
+// PDF Generation
 export const gerarCadernoPDF = (ocorrencia_ids) => {
     return api.post('/api/gerar-caderno-pdf/', { ocorrencia_ids }, {
         responseType: 'blob',
     });
 };
-
-// --- FUNÇÃO CORRIGIDA PARA GERAR O PDF (POR FILTRO) ---
 export const gerarCadernoPorFiltroPDF = (filters) => {
-    // A URL foi corrigida para '/api/gerar-caderno-por-filtro/'
-    // O corpo da requisição envia um objeto com a chave "filtros",
-    // e o valor é a variável "filters" que a função recebe.
-    return api.post('/api/gerar-caderno-por-filtro/', { filtros: filters }, {
+    return api.post('/api/gerar-caderno-por-filtro/', { filtros }, {
         responseType: 'blob',
     });
 };
