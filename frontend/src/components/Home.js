@@ -9,17 +9,17 @@ const Home = () => {
     const [editingOcorrencia, setEditingOcorrencia] = useState(null);
     const [refreshList, setRefreshList] = useState(false);
     
-    // Novo estado para guardar os dados dos dropdowns
+    // Estado centralizado para os dados dos dropdowns
     const [lookupData, setLookupData] = useState({
         opms: [],
         tiposOcorrencia: [],
         organizacoes: [],
         cadernos: [],
         modalidadesCrime: [],
-        loading: true // Estado de carregamento para os dados
+        loading: true
     });
 
-    // useEffect para carregar todos os dados uma única vez
+    // Carrega todos os dados necessários para a aplicação uma única vez
     useEffect(() => {
         const fetchLookupData = async () => {
             try {
@@ -67,7 +67,6 @@ const Home = () => {
         setSelectedOcorrenciaId(null);
     };
 
-    // Exibe uma mensagem de carregamento global enquanto os dados essenciais não estiverem prontos
     if (lookupData.loading) {
         return <p>Carregando dados da aplicação...</p>;
     }
@@ -83,7 +82,6 @@ const Home = () => {
                         onSelectOcorrencia={handleSelectOcorrencia}
                         onEditOcorrencia={handleEditOcorrencia}
                         refresh={refreshList}
-                        // Passa os dados necessários como props
                         opms={lookupData.opms}
                         tiposOcorrencia={lookupData.tiposOcorrencia}
                     />
@@ -94,7 +92,6 @@ const Home = () => {
                         <OcorrenciaForm 
                             existingOcorrencia={editingOcorrencia} 
                             onSuccess={handleFormSuccess}
-                            // Passa todos os dados necessários como props
                             lookupData={lookupData}
                         />
                     )}
