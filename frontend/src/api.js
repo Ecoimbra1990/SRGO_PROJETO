@@ -51,9 +51,12 @@ export const gerarCadernoPDF = (ocorrencia_ids) => {
     });
 };
 
-// --- NOVA FUNÇÃO PARA GERAR O PDF (POR FILTRO) ---
+// --- FUNÇÃO CORRIGIDA PARA GERAR O PDF (POR FILTRO) ---
 export const gerarCadernoPorFiltroPDF = (filters) => {
-    return api.post('/api/gerar-caderno-por-filtro/', { filtros }, {
+    // A URL foi corrigida para '/api/gerar-caderno-por-filtro/'
+    // O corpo da requisição envia um objeto com a chave "filtros",
+    // e o valor é a variável "filters" que a função recebe.
+    return api.post('/api/gerar-caderno-por-filtro/', { filtros: filters }, {
         responseType: 'blob',
     });
 };
