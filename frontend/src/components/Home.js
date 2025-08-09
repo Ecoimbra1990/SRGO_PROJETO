@@ -67,6 +67,7 @@ const Home = () => {
         setSelectedOcorrenciaId(null);
     };
 
+    // Mostra uma mensagem de carregamento global enquanto os dados essenciais não estiverem prontos
     if (lookupData.loading) {
         return <p>Carregando dados da aplicação...</p>;
     }
