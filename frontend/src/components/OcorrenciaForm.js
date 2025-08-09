@@ -13,7 +13,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
     const [isHomicidio, setIsHomicidio] = useState(false);
-    // ... outros states que não são para dados de lookup
     
     // Desestrutura os dados recebidos por props para facilitar o uso
     const { opms, tiposOcorrencia, organizacoes, cadernos, modalidadesCrime } = lookupData;
@@ -82,23 +81,67 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     // A verificação de 'loading' foi removida, pois o Home.js já a faz.
     return (
         <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
-            <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
+            <h2>{ocorrencia.id ? `Editar Ocorrência Nº ${ocorrencia.id}` : 'Registrar Nova Ocorrência'}</h2>
+            
             <div className="form-section">
                 <h3>Informações Gerais</h3>
+                <label>Data e Hora do Fato *</label>
                 <input type="datetime-local" name="data_fato" value={ocorrencia.data_fato} onChange={handleInputChange} required />
+
+                <label>Tipo de Ocorrência *</label>
                 <select name="tipo_ocorrencia" value={ocorrencia.tipo_ocorrencia || ''} onChange={handleInputChange} required>
-                    <option value="">Selecione o Tipo</option>
+                    <option value="" disabled>Selecione o Tipo</option>
                     {tiposOcorrencia.map(tipo => (<option key={tipo.id} value={tipo.id}>{tipo.nome}</option>))}
                 </select>
+
                 {isHomicidio && (
-                    <select name="tipo_homicidio" value={ocorrencia.tipo_homicidio || ''} onChange={handleInputChange}>
-                        <option value="">Selecione a Modalidade</option>
-                        {modalidadesCrime.map(m => (<option key={m.id} value={m.id}>{m.nome}</option>))}
-                    </select>
+                    <>
+                        <label>Modalidade do Crime *</label>
+                        <select name="tipo_homicidio" value={ocorrencia.tipo_homicidio || ''} onChange={handleInputChange} required>
+                            <option value="" disabled>Selecione a Modalidade</option>
+                            {modalidadesCrime.map(m => (<option key={m.id} value={m.id}>{m.nome}</option>))}
+                        </select>
+                    </>
                 )}
-                {/* O resto do seu JSX do formulário, que usará as variáveis desestruturadas de lookupData */}
+                
+                <label>Descrição do Fato *</label>
+                <textarea name="descricao_fato" value={ocorrencia.descricao_fato} onChange={handleInputChange} rows="6" required></textarea>
+                
+                <label>Evolução da Ocorrência</label>
+                <textarea name="evolucao_ocorrencia" value={ocorrencia.evolucao_ocorrencia} onChange={handleInputChange} rows="3"></textarea>
+                
+                <label>Fonte da Informação</label>
+                <input type="text" name="fonte_informacao" value={ocorrencia.fonte_informacao} onChange={handleInputChange} />
+
+                <label>Caderno Informativo</label>
+                <select name="caderno_informativo" value={ocorrencia.caderno_informativo || ''} onChange={handleInputChange}>
+                    <option value="">Nenhum</option>
+                    {cadernos.map(c => (<option key={c.id} value={c.id}>{c.nome}</option>))}
+                </select>
+
+                <div style={{marginTop: '10px'}}>
+                    <label>Foto da Ocorrência (opcional):</label>
+                    <input type="file" name="foto_ocorrencia_upload" onChange={handleFileChange} />
+                    {ocorrencia.foto_ocorrencia && !fotoFile && (
+                        <p>Imagem atual: <a href={ocorrencia.foto_ocorrencia} target="_blank" rel="noopener noreferrer">Ver Imagem</a></p>
+                    )}
+                </div>
             </div>
-            <button type="submit">Salvar</button>
+
+            <div className="form-section">
+                <h3>Localização</h3>
+                <input type="text" name="bairro" value={ocorrencia.bairro} onChange={handleInputChange} placeholder="Bairro" />
+                <input type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
+                <label>OPM da Área</label>
+                <select name="opm_area" value={ocorrencia.opm_area || ''} onChange={handleInputChange}>
+                    <option value="">Selecione a OPM</option>
+                    {opms.map(opm => (<option key={opm.id} value={opm.id}>{opm.nome}</option>))}
+                </select>
+            </div>
+
+            {/* Seções de Envolvidos e Armas podem ser adicionadas aqui conforme a lógica existente */}
+
+            <button type="submit" className="submit-button">{ocorrencia.id ? 'Atualizar' : 'Salvar'}</button>
         </form>
     );
 };
