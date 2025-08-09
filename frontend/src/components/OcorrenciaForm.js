@@ -1,14 +1,8 @@
-// Apenas a função handleSubmit precisa de ser alterada, mas para garantir, substitua o ficheiro completo.
 import React, { useState, useEffect } from 'react';
 import api, {
-    getOPMs,
-    getTiposOcorrencia,
-    getOrganizacoes,
-    getCadernos,
     getModelosArma,
     getLocalidadePorNome,
-    getModalidadesCrime,
-    patchOcorrencia // Importar a nova função
+    patchOcorrencia
 } from '../api';
 import './OcorrenciaForm.css';
 
@@ -19,30 +13,58 @@ const initialOcorrenciaState = {
     envolvidos: [], armas_apreendidas: [], tipo_homicidio: null
 };
 
-const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
-    const [loading, setLoading] = useState(true);
+// O componente agora recebe 'lookupData' com todos os dados necessários
+const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
+    // REMOVIDO: O estado de 'loading' já não é necessário aqui.
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
-    // ... (resto dos seus 'useState' hooks)
+    const [isHomicidio, setIsHomicidio] = useState(false);
+    // ... (outros states que não são para dados de lookup)
+    const [addressSuggestions, setAddressSuggestions] = useState([]);
+    const [mostrarSecaoArmas, setMostrarSecaoArmas] = useState(false);
+    const [armaSearchTerm, setArmaSearchTerm] = useState('');
+    const [armaSuggestions, setArmaSuggestions] = useState([]);
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
+    const [areaSugerida, setAreaSugerida] = useState(null);
 
-    // ... (todos os seus 'useEffect' hooks permanecem iguais)
+    // Desestrutura os dados recebidos por props para facilitar o uso
+    const { opms, tiposOcorrencia, organizacoes, cadernos, modalidadesCrime } = lookupData;
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setOcorrencia(prev => ({ ...prev, [name]: value }));
-    };
+    // REMOVIDO: O useEffect que buscava os dados foi completamente removido.
 
-    const handleFileChange = (e) => {
-        setFotoFile(e.target.files[0]);
-    };
+    useEffect(() => {
+        if (existingOcorrencia && existingOcorrencia.id) {
+            const armas = existingOcorrencia.armas_apreendidas || [];
+            setOcorrencia({
+                ...initialOcorrenciaState,
+                ...existingOcorrencia,
+                data_fato: existingOcorrencia.data_fato ? new Date(existingOcorrencia.data_fato).toISOString().slice(0, 16) : '',
+                envolvidos: existingOcorrencia.envolvidos || [],
+                armas_apreendidas: armas
+            });
+            if (armas.length > 0) {
+                setMostrarSecaoArmas(true);
+            }
+        } else {
+            setOcorrencia(initialOcorrenciaState);
+            setMostrarSecaoArmas(false);
+        }
+    }, [existingOcorrencia]);
 
-    // ... (outras funções auxiliares que não mudam)
+    useEffect(() => {
+        const tipoSelecionado = tiposOcorrencia.find(t => t.id === parseInt(ocorrencia.tipo_ocorrencia));
+        setIsHomicidio(tipoSelecionado && tipoSelecionado.nome.toUpperCase().includes('HOMICÍDIO DOLOSO'));
+        if (!isHomicidio) {
+            setOcorrencia(prev => ({ ...prev, tipo_homicidio: null }));
+        }
+    }, [ocorrencia.tipo_ocorrencia, tiposOcorrencia, isHomicidio]);
+
+    // ... (outros useEffects que não foram alterados)
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
 
-        // Monta o FormData apenas com os campos que serão enviados
         Object.keys(ocorrencia).forEach(key => {
             if (!['envolvidos', 'armas_apreendidas', 'foto_ocorrencia', 'id'].includes(key)) {
                 if (ocorrencia[key] !== null && ocorrencia[key] !== undefined) {
@@ -60,7 +82,6 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         
         try {
             if (ocorrencia.id) {
-                // CORREÇÃO: Usar a função patchOcorrencia em vez de api.put
                 await patchOcorrencia(ocorrencia.id, formData);
             } else {
                 await api.post('/api/ocorrencias/', formData, {
@@ -73,17 +94,17 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess }) => {
         }
     };
 
-    if (loading) return <p>Carregando formulário...</p>;
-    
+    // REMOVIDO: O 'if (loading)' já não é necessário.
+
     return (
         <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
-            {/* O JSX do seu formulário permanece exatamente o mesmo */}
-            {/* O importante é que o input de ficheiro tenha o nome 'foto_ocorrencia' */}
-             <div style={{marginTop: '10px'}}>
-                <label>Foto da Ocorrência (opcional):</label>
-                <input type="file" name="foto_ocorrencia" onChange={handleFileChange} />
+            <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
+
+            <div className="form-section">
+                <h3>Informações Gerais</h3>
+                {/* ... (resto do seu JSX do formulário, sem alterações) ... */}
             </div>
-            {/* ... resto do formulário ... */}
+            {/* ... (outras seções do formulário) ... */}
         </form>
     );
 };
