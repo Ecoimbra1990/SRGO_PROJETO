@@ -1,5 +1,3 @@
-# backend/ocorrencias/views.py
-
 from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import *
@@ -9,53 +7,17 @@ from .serializers import *
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from io import BytesIO
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
-from reportlab.lib import colors
+from django.template.loader import get_template
+from weasyprint import HTML, CSS
+from django.contrib.staticfiles.finders import find
+
 import pandas as pd
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
-from django.contrib.staticfiles.finders import find
 
-# --- VIEW PRINCIPAL PARA GERAR O PDF (REESCRITA COM SimpleDocTemplate) ---
+# --- VIEW PARA GERAR O PDF (REESCRITA COM WeasyPrint) ---
 class GerarCadernoPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
-    # Função para o cabeçalho em cada página
-    def header(self, canvas, doc):
-        canvas.saveState()
-        width = doc.width + doc.leftMargin + doc.rightMargin
-        height = doc.height + doc.topMargin + doc.bottomMargin
-        
-        coppm_logo_path = find('assets/coppm.png')
-        pmba_logo_path = find('assets/pmba.png')
-
-        if coppm_logo_path:
-            canvas.drawImage(coppm_logo_path, doc.leftMargin, height - 3*cm, width=2.5*cm, height=2.5*cm, preserveAspectRatio=True, mask='auto')
-        
-        if pmba_logo_path:
-            canvas.drawImage(pmba_logo_path, width - doc.rightMargin - 2.5*cm, height - 3*cm, width=2.5*cm, height=2.5*cm, preserveAspectRatio=True, mask='auto')
-
-        canvas.setFont("Helvetica-Bold", 14)
-        canvas.drawCentredString(width / 2.0, height - 1.5*cm, "GOVERNO DO ESTADO DA BAHIA")
-        canvas.setFont("Helvetica-Bold", 12)
-        canvas.drawCentredString(width / 2.0, height - 2.2*cm, "POLÍCIA MILITAR DA BAHIA")
-        canvas.setFont("Helvetica", 11)
-        canvas.drawCentredString(width / 2.0, height - 2.9*cm, "Comando de Operações Policiais Militares - COPPM")
-        
-        canvas.line(doc.leftMargin, height - 3.2*cm, width - doc.rightMargin, height - 3.2*cm)
-        canvas.restoreState()
-
-    # Função para o rodapé em cada página
-    def footer(self, canvas, doc):
-        canvas.saveState()
-        canvas.setFont('Helvetica', 9)
-        canvas.drawRightString(doc.width + doc.leftMargin, 1.5*cm, f"Página {doc.page}")
-        canvas.restoreState()
 
     def post(self, request, *args, **kwargs):
         ocorrencia_ids = request.data.get('ocorrencia_ids', [])
@@ -63,47 +25,28 @@ class GerarCadernoPDFView(APIView):
             return Response({"error": "Nenhuma ocorrência selecionada."}, status=400)
 
         ocorrencias = Ocorrencia.objects.filter(id__in=ocorrencia_ids).order_by('-data_fato')
-
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=4*cm, bottomMargin=2.5*cm, leftMargin=2*cm, rightMargin=2*cm)
         
-        styles = getSampleStyleSheet()
-        styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY, fontSize=10, leading=14))
-        styles.add(ParagraphStyle(name='H1', fontSize=16, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=20))
-        styles.add(ParagraphStyle(name='H2', fontSize=11, fontName='Helvetica-Bold', spaceBefore=12, spaceAfter=6, textColor=colors.darkblue))
-        styles.add(ParagraphStyle(name='TableHeader', fontSize=9, fontName='Helvetica-Bold'))
-        styles.add(ParagraphStyle(name='TableBody', fontSize=9, fontName='Helvetica'))
+        # Converte os caminhos das imagens para um formato que o WeasyPrint entende
+        coppm_logo_path = f"file://{find('assets/coppm.png')}"
+        pmba_logo_path = f"file://{find('assets/pmba.png')}"
         
-        story = [Paragraph("CADERNO INFORMATIVO DE OCORRÊNCIAS", styles['H1'])]
-
-        for ocorrencia in ocorrencias:
-            story.append(Spacer(1, 0.8*cm))
-            
-            tipo_ocorrencia_str = ocorrencia.tipo_ocorrencia.nome.upper() if ocorrencia.tipo_ocorrencia else "NÃO ESPECIFICADO"
-            story.append(Paragraph(f"OCORRÊNCIA Nº {ocorrencia.id} - {tipo_ocorrencia_str}", styles['H2']))
-
-            data = [
-                [Paragraph('<b>Data/Hora do Fato:</b>', styles['TableHeader']), Paragraph(ocorrencia.data_fato.strftime('%d/%m/%Y %H:%M'), styles['TableBody'])],
-                [Paragraph('<b>Local:</b>', styles['TableHeader']), Paragraph(f"{ocorrencia.cidade or ''} / {ocorrencia.bairro or ''}", styles['TableBody'])],
-                [Paragraph('<b>RISP / AISP / OPM:</b>', styles['TableHeader']), Paragraph(f"{ocorrencia.risp_area.nome if ocorrencia.risp_area else ''} / {ocorrencia.aisp_area.nome if ocorrencia.aisp_area else ''} / {ocorrencia.opm_area.nome if ocorrencia.opm_area else ''}", styles['TableBody'])],
-            ]
-            table = Table(data, colWidths=[4*cm, 13*cm])
-            story.append(table)
-            story.append(Spacer(1, 0.4*cm))
-            
-            story.append(Paragraph("<b>DESCRIÇÃO DO FATO:</b>", styles['TableHeader']))
-            story.append(Paragraph(ocorrencia.descricao_fato.replace('\n', '<br/>'), styles['Justify']))
-
-        doc.build(story, onFirstPage=self.header, onLaterPages=self.footer)
+        context = {
+            'ocorrencias': ocorrencias,
+            'coppm_logo_path': coppm_logo_path,
+            'pmba_logo_path': pmba_logo_path
+        }
         
-        pdf = buffer.getvalue()
-        buffer.close()
+        template = get_template('caderno_template.html')
+        html = template.render(context)
         
-        response = HttpResponse(pdf, content_type='application/pdf')
+        pdf_file = HTML(string=html).write_pdf()
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
         return response
 
 # --- O resto das ViewSets continua aqui, sem alterações ---
+# ... (DashboardAnalyticsView, ModalidadeCrimeViewSet, OcorrenciaViewSet, etc.)
 class DashboardAnalyticsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request, *args, **kwargs):
