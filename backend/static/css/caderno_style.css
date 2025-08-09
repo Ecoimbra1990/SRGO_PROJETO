@@ -2,28 +2,38 @@
 
 @page {
     size: A4;
-    margin: 1.5cm;
+    margin: 2cm 1.5cm 2cm 1.5cm; /* Margens: topo, direita, baixo, esquerda */
+
+    @frame header {
+        -pdf-frame-content: page-header;
+        top: 0.5cm;
+        left: 1.5cm;
+        right: 1.5cm;
+        height: 1.5cm;
+    }
+
+    @frame footer {
+        -pdf-frame-content: page-footer;
+        bottom: 0.5cm;
+        left: 1.5cm;
+        right: 1.5cm;
+        height: 1cm;
+    }
 }
 
 body {
-    font-family: 'Times New Roman', Times, serif; /* Fonte mais clássica para jornais */
+    font-family: 'Times New Roman', Times, serif;
     font-size: 11pt;
     color: #333;
-    column-count: 2; /* Cria o layout de duas colunas */
-    column-gap: 1.5cm; /* Espaço entre as colunas */
+    column-count: 2; /* Layout de duas colunas */
+    column-gap: 1.5cm;
 }
 
-.header, .footer {
-    position: running(header);
+#page-header {
+    width: 100%;
     text-align: center;
-}
-
-.header {
-    top: -1cm;
-    left: 0;
-    right: 0;
-    border-bottom: 2px solid #003366;
-    padding-bottom: 10px;
+    border-bottom: 2px solid #003366; /* Azul PMBA */
+    padding-bottom: 5px;
 }
 
 .logo {
@@ -34,36 +44,53 @@ body {
 .header-title {
     display: inline-block;
     vertical-align: middle;
-    margin: 0 20px;
+    margin: 0 1cm;
 }
 
-.header-title h2, .header-title h3 {
-    margin: 0;
+.header-title h2 {
+    font-size: 14pt;
     color: #003366;
+    margin: 0;
+}
+
+.header-title h3 {
+    font-size: 11pt;
+    color: #555;
+    margin: 2px 0;
+}
+
+#page-footer {
+    text-align: right;
+    font-size: 9pt;
+    color: #777;
 }
 
 .main-title {
-    column-span: all; /* Faz o título principal ocupar todas as colunas */
+    column-span: all; /* Ocupa todas as colunas */
     text-align: center;
     font-size: 24pt;
     font-weight: bold;
     margin-bottom: 1cm;
     color: #003366;
+    width: 100%;
 }
 
 .ocorrencia-block {
-    break-inside: avoid; /* Evita que uma ocorrência seja dividida entre colunas ou páginas */
+    break-inside: avoid; /* Evita que o bloco seja quebrado entre colunas/páginas */
     padding: 0.5cm;
     margin-bottom: 1cm;
     border: 1px solid #e0e0e0;
     border-radius: 5px;
+    background-color: #fdfdfd;
 }
 
 .ocorrencia-title {
     font-size: 14pt;
     font-weight: bold;
-    color: #d1a10d;
+    color: #d1a10d; /* Dourado PMBA */
     margin-bottom: 0.5cm;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
 }
 
 .info-label {
@@ -82,4 +109,5 @@ body {
     height: auto;
     margin-top: 10px;
     border-radius: 4px;
+    border: 1px solid #ccc;
 }
