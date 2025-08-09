@@ -44,10 +44,17 @@ export const getModelosArma = (search = '') => api.get(`/api/modelos-arma/?searc
 export const getLocalidadePorNome = (search = '') => api.get(`/api/localidades/?search=${search}`);
 export const getModalidadesCrime = () => api.get('/api/modalidades-crime/');
 
-// --- FUNÇÃO PARA GERAR O PDF ---
+// --- FUNÇÃO PARA GERAR O PDF (POR SELEÇÃO) ---
 export const gerarCadernoPDF = (ocorrencia_ids) => {
     return api.post('/api/gerar-caderno-pdf/', { ocorrencia_ids }, {
-        responseType: 'blob', // Importante para receber o ficheiro
+        responseType: 'blob',
+    });
+};
+
+// --- NOVA FUNÇÃO PARA GERAR O PDF (POR FILTRO) ---
+export const gerarCadernoPorFiltroPDF = (filters) => {
+    return api.post('/api/gerar-caderno-por-filtro/', { filtros }, {
+        responseType: 'blob',
     });
 };
 
