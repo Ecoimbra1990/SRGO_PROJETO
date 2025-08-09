@@ -10,6 +10,6 @@ gspread==5.12.4
 google-auth-oauthlib==1.2.0
 django-filter==24.2
 Pillow==10.4.0
-# Versão do WeasyPrint atualizada para a mais recente e compatível
-WeasyPrint==62.4
+# Versão removida para permitir a instalação da mais recente compatível
+WeasyPrint
 pandas==2.2.2
