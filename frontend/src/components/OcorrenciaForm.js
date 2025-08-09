@@ -54,6 +54,30 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
         }
     }, [ocorrencia.tipo_ocorrencia, tiposOcorrencia]);
 
+    useEffect(() => {
+        const termoBusca = ocorrencia.bairro || ocorrencia.cidade;
+        if (termoBusca.length < 3) {
+            setAreaSugerida(null);
+            return;
+        }
+        const handler = setTimeout(async () => {
+            try {
+                const response = await getLocalidadePorNome(termoBusca);
+                if (response.data && response.data.length > 0) {
+                    const localidadeEncontrada = response.data[0];
+                    setAreaSugerida(localidadeEncontrada);
+                    setOcorrencia(prev => ({ ...prev, opm_area: localidadeEncontrada.opm }));
+                } else {
+                    setAreaSugerida(null);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar área policial:', error);
+                setAreaSugerida(null);
+            }
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [ocorrencia.bairro, ocorrencia.cidade]);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setOcorrencia(prev => ({ ...prev, [name]: value }));
@@ -61,6 +85,27 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
 
     const handleFileChange = (e) => {
         setFotoFile(e.target.files[0]);
+    };
+    
+    const handleCepBlur = async (e) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        if (cep.length === 8) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                if (!data.erro) {
+                    setOcorrencia(prev => ({ 
+                        ...prev, 
+                        logradouro: data.logradouro, 
+                        bairro: data.bairro, 
+                        cidade: data.localidade, 
+                        uf: data.uf 
+                    }));
+                }
+            } catch (error) {
+                console.error('Erro ao buscar CEP:', error);
+            }
+        }
     };
 
     const handleEnvolvidoChange = (index, e) => {
@@ -73,12 +118,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const adicionarEnvolvido = () => {
         setOcorrencia(prev => ({
             ...prev,
-            envolvidos: [...prev.envolvidos, { 
-                nome: '', tipo_envolvimento: 'SUSPEITO', observacoes: '', 
-                organizacao_criminosa: null, procedimentos: [],
-                status: 'NAO_APLICAVEL', tipo_documento: 'CPF', documento: '',
-                sexo: 'I'
-            }]
+            envolvidos: [...prev.envolvidos, { nome: '', tipo_envolvimento: 'SUSPEITO', observacoes: '' }]
         }));
     };
 
@@ -87,11 +127,10 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
         novosEnvolvidos.splice(index, 1);
         setOcorrencia(prev => ({ ...prev, envolvidos: novosEnvolvidos }));
     };
-    
+
     const handleToggleSecaoArmas = (e) => {
-        const { checked } = e.target;
-        setMostrarSecaoArmas(checked);
-        if (!checked) {
+        setMostrarSecaoArmas(e.target.checked);
+        if (!e.target.checked) {
             setOcorrencia(prev => ({ ...prev, armas_apreendidas: [] }));
         }
     };
@@ -106,10 +145,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const adicionarArma = () => {
         setOcorrencia(prev => ({
             ...prev,
-            armas_apreendidas: [...prev.armas_apreendidas, { 
-                tipo: 'FOGO', marca: '', modelo: '', 
-                calibre: '', numero_serie: '', observacoes: '' 
-            }]
+            armas_apreendidas: [...prev.armas_apreendidas, { tipo: 'FOGO', marca: '', modelo: '', calibre: '', numero_serie: '', observacoes: '' }]
         }));
     };
 
@@ -138,9 +174,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
             if (ocorrencia.id) {
                 await patchOcorrencia(ocorrencia.id, formData);
             } else {
-                await api.post('/api/ocorrencias/', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.post('/api/ocorrencias/', formData);
             }
             onSuccess();
         } catch (error) {
@@ -199,8 +233,22 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
 
             <div className="form-section">
                 <h3>Localização</h3>
-                <input type="text" name="bairro" value={ocorrencia.bairro} onChange={handleInputChange} placeholder="Bairro" />
-                <input type="text" name="cidade" value={ocorrencia.cidade} onChange={handleInputChange} placeholder="Cidade" />
+                <input type="text" name="cep" value={ocorrencia.cep || ''} onChange={handleInputChange} onBlur={handleCepBlur} placeholder="CEP (preenche o endereço)" />
+                <div style={{display: 'flex', gap: '10px'}}>
+                    <input style={{flex: 3}} type="text" name="cidade" value={ocorrencia.cidade || ''} onChange={handleInputChange} placeholder="Cidade" />
+                    <input style={{flex: 1}} type="text" name="uf" value={ocorrencia.uf || ''} onChange={handleInputChange} placeholder="UF" maxLength="2" />
+                </div>
+                <input type="text" name="logradouro" value={ocorrencia.logradouro || ''} onChange={handleInputChange} placeholder="Logradouro" />
+                <input type="text" name="bairro" value={ocorrencia.bairro || ''} onChange={handleInputChange} placeholder="Bairro" />
+                <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                    <input style={{flex: 1}} type="text" name="latitude" value={ocorrencia.latitude || ''} onChange={handleInputChange} placeholder="Latitude" />
+                    <input style={{flex: 1}} type="text" name="longitude" value={ocorrencia.longitude || ''} onChange={handleInputChange} placeholder="Longitude" />
+                </div>
+                {areaSugerida && (
+                    <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e7f3fe', border: '1px solid #bde5f8', borderRadius: '4px', textAlign: 'left' }}>
+                        <p><strong>OPM Sugerida:</strong> {areaSugerida.opm_nome}</p>
+                    </div>
+                )}
                 <label>OPM da Área</label>
                 <select name="opm_area" value={ocorrencia.opm_area || ''} onChange={handleInputChange}>
                     <option value="">Selecione a OPM</option>
@@ -227,7 +275,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
             </div>
             
             <div className="form-section">
-                 <label>
+                 <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
                     <input type="checkbox" checked={mostrarSecaoArmas} onChange={handleToggleSecaoArmas} />
                     Houve apreensão de armas?
                 </label>
