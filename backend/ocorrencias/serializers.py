@@ -78,8 +78,9 @@ class ArmaApreendidaSerializer(serializers.ModelSerializer):
         fields = ['id', 'tipo', 'marca', 'modelo', 'calibre', 'numero_serie', 'observacoes', 'modelo_catalogado']
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    envolvidos = PessoaEnvolvidaSerializer(many=True, required=False, read_only=True)
-    armas_apreendidas = ArmaApreendidaSerializer(many=True, required=False, read_only=True)
+    # Campos aninhados são lidos da base de dados, mas escritos via `create`/`update`
+    envolvidos = PessoaEnvolvidaSerializer(many=True, read_only=True)
+    armas_apreendidas = ArmaApreendidaSerializer(many=True, read_only=True)
     
     usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
     usuario_registro_nome_completo = serializers.SerializerMethodField()
@@ -90,6 +91,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
     tipo_homicidio_nome = serializers.CharField(source='tipo_homicidio.nome', read_only=True, allow_null=True)
     
+    # Campo para receber o ficheiro no upload, mas não é guardado diretamente no modelo
     foto_ocorrencia_upload = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
@@ -119,6 +121,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
         return None
 
     def _handle_nested_data(self, request_data, field_name):
+        """Função auxiliar para processar dados aninhados que chegam como JSON string."""
         field_data = request_data.get(field_name)
         if field_data and isinstance(field_data, str):
             try:
@@ -133,7 +136,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             foto_url = upload_to_drive(foto_file)
             if foto_url:
                 validated_data['foto_ocorrencia'] = foto_url
-
+        
         request = self.context.get('request')
         envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
         armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
@@ -176,5 +179,21 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.Serializer):
     matricula = serializers.CharField(max_length=20)
     password = serializers.CharField(write_only=True)
+    
     def validate_matricula(self, value):
-        if not Efetivo.objects
+        if not Efetivo.objects.filter(matricula=value).exists():
+            raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
+        return value
+        
+    def create(self, validated_data):
+        efetivo_data = Efetivo.objects.get(matricula=validated_data['matricula'])
+        nome_completo = efetivo_data.nome.split()
+        user = User.objects.create_user(
+            username=validated_data['matricula'],
+            password=validated_data['password'],
+            first_name=nome_completo[0],
+            last_name=' '.join(nome_completo[1:]) if len(nome_completo) > 1 else ''
+        )
+        return user
