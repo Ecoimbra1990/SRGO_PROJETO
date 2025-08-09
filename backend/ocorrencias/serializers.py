@@ -78,8 +78,8 @@ class ArmaApreendidaSerializer(serializers.ModelSerializer):
         fields = ['id', 'tipo', 'marca', 'modelo', 'calibre', 'numero_serie', 'observacoes', 'modelo_catalogado']
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    envolvidos = serializers.CharField(write_only=True, required=False)
-    armas_apreendidas = serializers.CharField(write_only=True, required=False)
+    envolvidos = PessoaEnvolvidaSerializer(many=True, required=False, read_only=True)
+    armas_apreendidas = ArmaApreendidaSerializer(many=True, required=False, read_only=True)
     
     usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
     usuario_registro_nome_completo = serializers.SerializerMethodField()
@@ -90,7 +90,6 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
     tipo_homicidio_nome = serializers.CharField(source='tipo_homicidio.nome', read_only=True, allow_null=True)
     
-    foto_ocorrencia = serializers.URLField(read_only=True)
     foto_ocorrencia_upload = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
@@ -106,7 +105,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             'cep', 'logradouro', 'bairro', 'cidade', 'uf', 'latitude', 'longitude',
             'envolvidos', 'armas_apreendidas'
         ]
-        read_only_fields = ['usuario_registro', 'aisp_area', 'risp_area']
+        read_only_fields = ['usuario_registro', 'aisp_area', 'risp_area', 'foto_ocorrencia']
 
     def get_usuario_registro_nome_completo(self, obj):
         if obj.usuario_registro:
@@ -119,32 +118,34 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
                 return obj.usuario_registro.username
         return None
 
+    def _handle_nested_data(self, request_data, field_name):
+        field_data = request_data.get(field_name)
+        if field_data and isinstance(field_data, str):
+            try:
+                return json.loads(field_data)
+            except json.JSONDecodeError:
+                return []
+        return field_data if field_data else []
+
     def create(self, validated_data):
         foto_file = validated_data.pop('foto_ocorrencia_upload', None)
         if foto_file:
             foto_url = upload_to_drive(foto_file)
             if foto_url:
                 validated_data['foto_ocorrencia'] = foto_url
-        
-        envolvidos_str = validated_data.pop('envolvidos', '[]')
-        armas_str = validated_data.pop('armas_apreendidas', '[]')
+
+        request = self.context.get('request')
+        envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
+        armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
 
         ocorrencia = Ocorrencia.objects.create(**validated_data)
 
-        try:
-            envolvidos_data = json.loads(envolvidos_str)
-            for envolvido_data in envolvidos_data:
-                envolvido_data.pop('procedimentos', None)
-                PessoaEnvolvida.objects.create(ocorrencia=ocorrencia, **envolvido_data)
-        except json.JSONDecodeError:
-            pass
-
-        try:
-            armas_data = json.loads(armas_str)
-            for arma_data in armas_data:
-                ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
-        except json.JSONDecodeError:
-            pass
+        for envolvido_data in envolvidos_data:
+            envolvido_data.pop('procedimentos', None)
+            PessoaEnvolvida.objects.create(ocorrencia=ocorrencia, **envolvido_data)
+        
+        for arma_data in armas_data:
+            ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
         
         return ocorrencia
 
@@ -155,29 +156,20 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             if foto_url:
                 instance.foto_ocorrencia = foto_url
 
-        envolvidos_str = validated_data.pop('envolvidos', None)
-        armas_str = validated_data.pop('armas_apreendidas', None)
+        request = self.context.get('request')
+        envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
+        armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
 
         instance = super().update(instance, validated_data)
         
-        if envolvidos_str is not None:
-            instance.envolvidos.all().delete()
-            try:
-                envolvidos_data = json.loads(envolvidos_str)
-                for envolvido_data in envolvidos_data:
-                    envolvido_data.pop('procedimentos', None)
-                    PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
-            except json.JSONDecodeError:
-                pass
+        instance.envolvidos.all().delete()
+        for envolvido_data in envolvidos_data:
+            envolvido_data.pop('procedimentos', None)
+            PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
 
-        if armas_str is not None:
-            instance.armas_apreendidas.all().delete()
-            try:
-                armas_data = json.loads(armas_str)
-                for arma_data in armas_data:
-                    ArmaApreendida.objects.create(ocorrencia=instance, **arma_data)
-            except json.JSONDecodeError:
-                pass
+        instance.armas_apreendidas.all().delete()
+        for arma_data in armas_data:
+            ArmaApreendida.objects.create(ocorrencia=instance, **arma_data)
             
         return instance
 
@@ -185,18 +177,4 @@ class UserRegistrationSerializer(serializers.Serializer):
     matricula = serializers.CharField(max_length=20)
     password = serializers.CharField(write_only=True)
     def validate_matricula(self, value):
-        if not Efetivo.objects.filter(matricula=value).exists():
-            raise serializers.ValidationError("Matrícula não encontrada no efetivo.")
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Utilizador com esta matrícula já registado.")
-        return value
-    def create(self, validated_data):
-        efetivo_data = Efetivo.objects.get(matricula=validated_data['matricula'])
-        nome_completo = efetivo_data.nome.split()
-        user = User.objects.create_user(
-            username=validated_data['matricula'],
-            password=validated_data['password'],
-            first_name=nome_completo[0],
-            last_name=' '.join(nome_completo[1:]) if len(nome_completo) > 1 else ''
-        )
-        return user
+        if not Efetivo.objects
