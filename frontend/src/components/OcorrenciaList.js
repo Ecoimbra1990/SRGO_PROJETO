@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOcorrencias, getOPMs, getTiposOcorrencia, gerarCadernoPDF } from '../api';
+import { getOcorrencias, getOPMs, getTiposOcorrencia, gerarCadernoPDF, gerarCadernoPorFiltroPDF } from '../api';
 import './OcorrenciaList.css';
 
 const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
@@ -83,6 +83,23 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
         }
     };
 
+    const handleGerarPDFPorFiltro = async () => {
+        try {
+            // Passa o objeto de filtros atual para a API
+            const response = await gerarCadernoPorFiltroPDF(filters);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'caderno_informativo_filtrado.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (err) {
+            console.error("Erro ao gerar PDF por filtro:", err);
+            setError("Não foi possível gerar o PDF com os filtros atuais.");
+        }
+    };
+
     return (
         <div className="ocorrencia-list-container">
             <h3>Registros de Ocorrências</h3>
@@ -102,6 +119,10 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh }) => {
                 <button onClick={clearFilters} className="clear-button">Limpar Filtros</button>
                 <button onClick={handleGerarPDF} className="pdf-button" disabled={selectedOcorrencias.length === 0}>
                     Gerar Caderno ({selectedOcorrencias.length})
+                </button>
+                {/* Novo botão para gerar por filtro */}
+                <button onClick={handleGerarPDFPorFiltro} className="pdf-button">
+                    Gerar por Filtro
                 </button>
             </div>
 
