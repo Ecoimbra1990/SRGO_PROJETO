@@ -3,7 +3,8 @@
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
-import json # Importa a biblioteca para processar JSON
+import json
+from .google_drive_utils import upload_to_drive
 
 class OPMSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,8 +78,8 @@ class ArmaApreendidaSerializer(serializers.ModelSerializer):
         fields = ['id', 'tipo', 'marca', 'modelo', 'calibre', 'numero_serie', 'observacoes', 'modelo_catalogado']
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    envolvidos = PessoaEnvolvidaSerializer(many=True, required=False)
-    armas_apreendidas = ArmaApreendidaSerializer(many=True, required=False)
+    envolvidos = serializers.CharField(write_only=True, required=False)
+    armas_apreendidas = serializers.CharField(write_only=True, required=False)
     
     usuario_registro_username = serializers.ReadOnlyField(source='usuario_registro.username')
     usuario_registro_nome_completo = serializers.SerializerMethodField()
@@ -88,6 +89,9 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     tipo_ocorrencia_nome = serializers.CharField(source='tipo_ocorrencia.nome', read_only=True, allow_null=True)
     caderno_informativo_nome = serializers.CharField(source='caderno_informativo.nome', read_only=True, allow_null=True)
     tipo_homicidio_nome = serializers.CharField(source='tipo_homicidio.nome', read_only=True, allow_null=True)
+    
+    foto_ocorrencia = serializers.URLField(read_only=True)
+    foto_ocorrencia_upload = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = Ocorrencia
@@ -96,7 +100,8 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
             'caderno_informativo', 'caderno_informativo_nome',
             'opm_area', 'opm_area_nome', 'aisp_area', 'aisp_area_nome',
             'risp_area', 'risp_area_nome', 'tipo_homicidio', 'tipo_homicidio_nome',
-            'foto_ocorrencia', 'data_fato', 'descricao_fato', 'fonte_informacao', 'evolucao_ocorrencia',
+            'foto_ocorrencia', 'foto_ocorrencia_upload',
+            'data_fato', 'descricao_fato', 'fonte_informacao', 'evolucao_ocorrencia',
             'usuario_registro', 'usuario_registro_username', 'usuario_registro_nome_completo',
             'cep', 'logradouro', 'bairro', 'cidade', 'uf', 'latitude', 'longitude',
             'envolvidos', 'armas_apreendidas'
@@ -114,67 +119,65 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
                 return obj.usuario_registro.username
         return None
 
-    def _handle_nested_data(self, request_data, field_name):
-        """Função auxiliar para processar dados aninhados que chegam como JSON string."""
-        field_data = request_data.get(field_name)
-        if field_data and isinstance(field_data, str):
-            try:
-                return json.loads(field_data)
-            except json.JSONDecodeError:
-                return []
-        return field_data if field_data else []
-
-    def _handle_armas(self, ocorrencia, armas_data):
-        for arma_data in armas_data:
-            if not arma_data.get('modelo_catalogado'):
-                modelo_obj, _ = ModeloArma.objects.get_or_create(
-                    modelo=arma_data['modelo'].upper(),
-                    defaults={
-                        'marca': arma_data.get('marca', '').upper(),
-                        'calibre': arma_data.get('calibre', '').upper(),
-                        'tipo': arma_data.get('tipo', 'FOGO'),
-                        'especie': arma_data.get('especie', 'NAO_DEFINIDA') 
-                    }
-                )
-                arma_data['modelo_catalogado'] = modelo_obj
-            arma_data.pop('especie', None)
-            ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
-
     def create(self, validated_data):
-        request = self.context.get('request')
-        envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
-        armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
+        foto_file = validated_data.pop('foto_ocorrencia_upload', None)
+        if foto_file:
+            foto_url = upload_to_drive(foto_file)
+            if foto_url:
+                validated_data['foto_ocorrencia'] = foto_url
         
-        # Remove os campos aninhados dos dados validados para evitar erros
-        validated_data.pop('envolvidos', None)
-        validated_data.pop('armas_apreendidas', None)
+        envolvidos_str = validated_data.pop('envolvidos', '[]')
+        armas_str = validated_data.pop('armas_apreendidas', '[]')
 
         ocorrencia = Ocorrencia.objects.create(**validated_data)
+
+        try:
+            envolvidos_data = json.loads(envolvidos_str)
+            for envolvido_data in envolvidos_data:
+                envolvido_data.pop('procedimentos', None)
+                PessoaEnvolvida.objects.create(ocorrencia=ocorrencia, **envolvido_data)
+        except json.JSONDecodeError:
+            pass
+
+        try:
+            armas_data = json.loads(armas_str)
+            for arma_data in armas_data:
+                ArmaApreendida.objects.create(ocorrencia=ocorrencia, **arma_data)
+        except json.JSONDecodeError:
+            pass
         
-        for envolvido_data in envolvidos_data:
-            envolvido_data.pop('procedimentos', None) # Remove sub-aninhados se existirem
-            PessoaEnvolvida.objects.create(ocorrencia=ocorrencia, **envolvido_data)
-        
-        self._handle_armas(ocorrencia, armas_data)
         return ocorrencia
 
     def update(self, instance, validated_data):
-        request = self.context.get('request')
-        envolvidos_data = self._handle_nested_data(request.data, 'envolvidos')
-        armas_data = self._handle_nested_data(request.data, 'armas_apreendidas')
+        foto_file = validated_data.pop('foto_ocorrencia_upload', None)
+        if foto_file:
+            foto_url = upload_to_drive(foto_file)
+            if foto_url:
+                instance.foto_ocorrencia = foto_url
 
-        validated_data.pop('envolvidos', None)
-        validated_data.pop('armas_apreendidas', None)
+        envolvidos_str = validated_data.pop('envolvidos', None)
+        armas_str = validated_data.pop('armas_apreendidas', None)
 
         instance = super().update(instance, validated_data)
         
-        instance.envolvidos.all().delete()
-        for envolvido_data in envolvidos_data:
-            envolvido_data.pop('procedimentos', None)
-            PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
+        if envolvidos_str is not None:
+            instance.envolvidos.all().delete()
+            try:
+                envolvidos_data = json.loads(envolvidos_str)
+                for envolvido_data in envolvidos_data:
+                    envolvido_data.pop('procedimentos', None)
+                    PessoaEnvolvida.objects.create(ocorrencia=instance, **envolvido_data)
+            except json.JSONDecodeError:
+                pass
 
-        instance.armas_apreendidas.all().delete()
-        self._handle_armas(instance, armas_data)
+        if armas_str is not None:
+            instance.armas_apreendidas.all().delete()
+            try:
+                armas_data = json.loads(armas_str)
+                for arma_data in armas_data:
+                    ArmaApreendida.objects.create(ocorrencia=instance, **arma_data)
+            except json.JSONDecodeError:
+                pass
             
         return instance
 
