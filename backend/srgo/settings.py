@@ -17,13 +17,20 @@ INSTALLED_APPS = [
     'django_filters',
     'ocorrencias',
 ]
+
+# A ordem do MIDDLEWARE é importante. corsheaders deve vir antes de CommonMiddleware.
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware', 'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # Posição correta
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 ROOT_URLCONF = 'srgo.urls'
 TEMPLATES = [{'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIRS': [], 'APP_DIRS': True, 'OPTIONS': {'context_processors': ['django.template.context_processors.debug', 'django.template.context_processors.request', 'django.contrib.auth.context_processors.auth', 'django.contrib.messages.context_processors.messages']}}]
 WSGI_APPLICATION = 'srgo.wsgi.application'
@@ -45,16 +52,11 @@ TIME_ZONE = 'America/Bahia'
 USE_I18N = True
 USE_TZ = True
 
-# --- CONFIGURAÇÃO DE FICHEIROS ESTÁTICOS E DE MÉDIA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# URL para aceder aos ficheiros de média no navegador
 MEDIA_URL = '/media/'
-# Caminho no servidor onde os ficheiros de upload serão guardados
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# --- FIM DA CONFIGURAÇÃO ---
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
@@ -62,5 +64,20 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
 }
-CORS_ALLOW_ALL_ORIGINS = True
+
+# --- CONFIGURAÇÃO DE CORS CORRIGIDA E MAIS SEGURA ---
+CORS_ALLOW_ALL_ORIGINS = False # Desativa a permissão para todos
+
+# Adiciona as URLs do seu frontend (deploy e local) à lista de permissões
+CORS_ALLOWED_ORIGINS = [
+    "https://srgo-frontend.onrender.com",
+    "http://localhost:3000", # Para desenvolvimento local
+]
+
+# Opcional, mas recomendado: permite que o cabeçalho de 'Authorization' seja enviado
+CORS_ALLOW_HEADERS = [
+    'authorization',
+    'content-type',
+]
+
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=60), "REFRESH_TOKEN_LIFETIME": timedelta(days=1)}
