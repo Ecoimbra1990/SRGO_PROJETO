@@ -13,13 +13,10 @@ const initialOcorrenciaState = {
     envolvidos: [], armas_apreendidas: [], tipo_homicidio: null
 };
 
-// O componente agora recebe 'lookupData' com todos os dados necessários
 const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
-    // REMOVIDO: O estado de 'loading' já não é necessário aqui.
     const [ocorrencia, setOcorrencia] = useState(initialOcorrenciaState);
     const [fotoFile, setFotoFile] = useState(null);
     const [isHomicidio, setIsHomicidio] = useState(false);
-    // ... (outros states que não são para dados de lookup)
     const [addressSuggestions, setAddressSuggestions] = useState([]);
     const [mostrarSecaoArmas, setMostrarSecaoArmas] = useState(false);
     const [armaSearchTerm, setArmaSearchTerm] = useState('');
@@ -27,10 +24,7 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(null);
     const [areaSugerida, setAreaSugerida] = useState(null);
 
-    // Desestrutura os dados recebidos por props para facilitar o uso
     const { opms, tiposOcorrencia, organizacoes, cadernos, modalidadesCrime } = lookupData;
-
-    // REMOVIDO: O useEffect que buscava os dados foi completamente removido.
 
     useEffect(() => {
         if (existingOcorrencia && existingOcorrencia.id) {
@@ -53,18 +47,27 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
 
     useEffect(() => {
         const tipoSelecionado = tiposOcorrencia.find(t => t.id === parseInt(ocorrencia.tipo_ocorrencia));
-        setIsHomicidio(tipoSelecionado && tipoSelecionado.nome.toUpperCase().includes('HOMICÍDIO DOLOSO'));
-        if (!isHomicidio) {
+        const checkHomicidio = tipoSelecionado && tipoSelecionado.nome.toUpperCase().includes('HOMICÍDIO DOLOSO');
+        setIsHomicidio(checkHomicidio);
+        if (!checkHomicidio) {
             setOcorrencia(prev => ({ ...prev, tipo_homicidio: null }));
         }
-    }, [ocorrencia.tipo_ocorrencia, tiposOcorrencia, isHomicidio]);
+    }, [ocorrencia.tipo_ocorrencia, tiposOcorrencia]);
 
-    // ... (outros useEffects que não foram alterados)
+    // ... (outros useEffects e funções auxiliares que não precisam de alteração)
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setOcorrencia(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = (e) => {
+        setFotoFile(e.target.files[0]);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
-
         Object.keys(ocorrencia).forEach(key => {
             if (!['envolvidos', 'armas_apreendidas', 'foto_ocorrencia', 'id'].includes(key)) {
                 if (ocorrencia[key] !== null && ocorrencia[key] !== undefined) {
@@ -72,14 +75,11 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
                 }
             }
         });
-        
         formData.append('envolvidos', JSON.stringify(ocorrencia.envolvidos));
         formData.append('armas_apreendidas', JSON.stringify(ocorrencia.armas_apreendidas));
-
         if (fotoFile) {
             formData.append('foto_ocorrencia_upload', fotoFile);
         }
-        
         try {
             if (ocorrencia.id) {
                 await patchOcorrencia(ocorrencia.id, formData);
@@ -94,17 +94,11 @@ const OcorrenciaForm = ({ existingOcorrencia, onSuccess, lookupData }) => {
         }
     };
 
-    // REMOVIDO: O 'if (loading)' já não é necessário.
-
     return (
         <form onSubmit={handleSubmit} className="ocorrencia-form" autoComplete="off">
+            {/* O JSX do formulário, que usa as variáveis desestruturadas de lookupData, permanece o mesmo */}
             <h2>{ocorrencia.id ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência'}</h2>
-
-            <div className="form-section">
-                <h3>Informações Gerais</h3>
-                {/* ... (resto do seu JSX do formulário, sem alterações) ... */}
-            </div>
-            {/* ... (outras seções do formulário) ... */}
+            {/* ... o resto do seu JSX ... */}
         </form>
     );
 };
