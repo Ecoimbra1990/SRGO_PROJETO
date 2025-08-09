@@ -4,13 +4,15 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 import io
 
-# Caminho para o ficheiro de credenciais criado no Render
 SERVICE_ACCOUNT_FILE = 'google_credentials.json'
 SCOPES = ['https://www.googleapis.com/auth/drive']
 FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
 
 def get_drive_service():
     """Autentica e retorna um objeto de serviço do Google Drive."""
+    if not os.path.exists(SERVICE_ACCOUNT_FILE):
+        print(f"Erro: Ficheiro de credenciais '{SERVICE_ACCOUNT_FILE}' não encontrado.")
+        return None
     creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     service = build('drive', 'v3', credentials=creds)
     return service
@@ -24,8 +26,9 @@ def upload_to_drive(file_object):
 
     try:
         service = get_drive_service()
+        if not service:
+            return None
         
-        # Cria um objeto de media a partir do ficheiro em memória
         file_io_base = io.BytesIO(file_object.read())
         media = MediaIoBaseUpload(
             file_io_base, 
@@ -33,13 +36,11 @@ def upload_to_drive(file_object):
             resumable=True
         )
 
-        # Prepara os metadados do ficheiro
         file_metadata = {
             'name': file_object.name,
             'parents': [FOLDER_ID]
         }
 
-        # Executa o upload e obtém o ID do ficheiro
         uploaded_file = service.files().create(
             body=file_metadata,
             media_body=media,
@@ -47,12 +48,10 @@ def upload_to_drive(file_object):
         ).execute()
         
         file_id = uploaded_file.get('id')
-        
-        # Torna o ficheiro publicamente acessível (qualquer pessoa com o link)
         service.permissions().create(fileId=file_id, body={'role': 'reader', 'type': 'anyone'}).execute()
         
-        # Retorna o link para visualização direta
-        return uploaded_file.get('webViewLink')
+        # Transforma o link de visualização num link direto para a imagem
+        return uploaded_file.get('webViewLink').replace("view", "uc")
 
     except Exception as e:
         print(f"Erro ao fazer upload para o Google Drive: {e}")
