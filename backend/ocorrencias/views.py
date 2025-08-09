@@ -14,18 +14,16 @@ from weasyprint import HTML, CSS
 from django.conf import settings
 import os
 
-# Outros imports para o Dashboard
+# Imports para o Dashboard
 import pandas as pd
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
 def get_asset_path(asset_name):
     """Função auxiliar para encontrar caminhos de ficheiros estáticos de forma fiável."""
-    # O STATIC_ROOT é o diretório onde o 'collectstatic' coloca todos os ficheiros em produção.
     path = os.path.join(settings.STATIC_ROOT, asset_name)
     if os.path.exists(path):
         return f'file://{path}'
-    # Fallback para o ambiente de desenvolvimento
     path = os.path.join(settings.BASE_DIR, 'static', asset_name)
     if os.path.exists(path):
         return f'file://{path}'
@@ -52,15 +50,16 @@ class GerarCadernoPDFView(APIView):
         html = template.render(context)
         
         css_path = get_asset_path('css/caderno_style.css').replace('file://', '')
-        css = CSS(filename=css_path) if css_path else None
+        css = CSS(filename=css_path) if css_path and os.path.exists(css_path) else None
         
+        # CORREÇÃO: Removido o base_url, pois agora todos os caminhos são absolutos
         pdf_file = HTML(string=html).write_pdf(stylesheets=[css] if css else [])
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
         return response
 
-# --- NOVA VIEW PARA GERAR PDF (BASEADO EM FILTROS) ---
+# --- VIEW PARA GERAR PDF (BASEADO EM FILTROS) ---
 class GerarCadernoPorFiltroPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -95,8 +94,9 @@ class GerarCadernoPorFiltroPDFView(APIView):
         html = template.render(context)
 
         css_path = get_asset_path('css/caderno_style.css').replace('file://', '')
-        css = CSS(filename=css_path) if css_path else None
+        css = CSS(filename=css_path) if css_path and os.path.exists(css_path) else None
         
+        # CORREÇÃO: Removido o base_url
         pdf_file = HTML(string=html).write_pdf(stylesheets=[css] if css else [])
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
