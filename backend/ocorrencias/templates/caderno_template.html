@@ -1,162 +1,86 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-<meta charset="UTF-8">
-<style>
-@page {
-size: A4;
-margin: 2cm;
-@frame header {
--pdf-frame-content: page-header;
-top: 1cm;
-left: 2cm;
-right: 2cm;
-height: 3cm;
-}
-@frame footer {
--pdf-frame-content: page-footer;
-bottom: 1cm;
-left: 2cm;
-right: 2cm;
-height: 1cm;
-}
-}
-body {
-font-family: 'Merriweather', serif; /* Fonte para o corpo do texto /
-font-size: 11pt;
-color: #333;
-background-color: #f8f8f8;
-}
-h1, h2, h3 {
-font-family: 'Oswald', sans-serif; / Fontes para títulos /
-color: #224574; / Azul mais escuro /
-margin-top: 10px;
-margin-bottom: 5px;
-line-height: 1.2;
-}
-h1 { font-size: 24pt; text-align: center; margin-bottom: 20px; }
-h2 { font-size: 18pt; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
-h3 { font-size: 14pt; }
-.header-table {
-width: 100%;
-border-bottom: 1px solid #ccc;
-padding-bottom: 10px;
-margin-bottom: 15px;
-}
-.header-table td {
-vertical-align: middle;
-}
-.logo {
-width: 80px;
-}
-.header-title {
-text-align: center;
-}
-.footer-content {
-text-align: right;
-font-size: 9pt;
-color: #777;
-}
-.ocorrencia-block {
-margin-bottom: 25px;
-padding: 15px;
-background-color: white;
-border: 1px solid #ddd;
-border-radius: 8px;
-box-shadow: 2px 2px 5px #eee;
-page-break-inside: avoid;
-}
-.ocorrencia-title {
-color: #b3261e; / Vermelho tijolo */
-font-size: 16pt;
-font-family: 'Oswald', sans-serif;
-margin-bottom: 10px;
-border-bottom: 2px solid #e0e0e0;
-padding-bottom: 8px;
-}
-.info-row {
-display: flex;
-margin-bottom: 8px;
-}
-.info-label {
-font-weight: bold;
-color: #555;
-width: 150px;
-flex-shrink: 0;
-}
-.info-value {
-flex-grow: 1;
-}
-.description-title {
-font-weight: bold;
-color: #555;
-margin-top: 15px;
-margin-bottom: 5px;
-}
-.description-text {
-text-align: justify;
-line-height: 1.5;
-}
-.ocorrencia-image {
-max-width: 100%;
-height: auto;
-margin-top: 10px;
-border: 1px solid #ccc;
-border-radius: 4px;
-}
-</style>
-<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @frame header { -pdf-frame-content: page-header; top: 1cm; left: 1.5cm; right: 1.5cm; height: 3.5cm; }
+            @frame footer { -pdf-frame-content: page-footer; bottom: 1cm; left: 1.5cm; right: 1.5cm; height: 1cm; }
+        }
+        body { font-family: 'Helvetica', sans-serif; font-size: 10pt; }
+        .header-table { width: 100%; border: 0; }
+        .header-table td { vertical-align: middle; }
+        .logo { width: 2.5cm; }
+        .header-title { text-align: center; }
+        .header-title h2, .header-title h3, .header-title h4 { margin: 2px 0; }
+        .footer-content { text-align: right; font-size: 9pt; }
+        .main-title { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 1.5cm; }
+        .ocorrencia-block { margin-bottom: 1.5cm; page-break-inside: avoid; }
+        .ocorrencia-title { font-size: 11pt; font-weight: bold; background-color: #f2f2f2; padding: 5px; border: 1px solid #ccc; }
+        .info-table { width: 100%; margin-top: 0.5cm; border-collapse: collapse; }
+        .info-table td { padding: 4px; border: 1px solid #ddd; }
+        .info-table .label { font-weight: bold; width: 3.5cm; }
+        .description { margin-top: 0.5cm; text-align: justify; }
+        .ocorrencia-image { max-width: 100%; height: auto; margin-top: 10px; border: 1px solid #ccc; }
+    </style>
 </head>
 <body>
-<div id="page-header">
-<table class="header-table">
-<tr>
-<td style="width: 100px;"><img src="{{ coppm_logo_path }}" class="logo"></td>
-<td class="header-title">
-<h3>POLÍCIA MILITAR DA BAHIA</h3>
-<h2>Comando de Operações Policiais Militares - COPPM</h2>
-</td>
-<td style="width: 100px; text-align: right;"><img src="{{ pmba_logo_path }}" class="logo"></td>
-</tr>
-</table>
-</div>
+    <div id="page-header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 2.5cm;"><img src="/static/assets/coppm.png" class="logo"></td>
+                <td class="header-title">
+                    <h2>GOVERNO DO ESTADO DA BAHIA</h2>
+                    <h3>POLÍCIA MILITAR DA BAHIA</h3>
+                    <h4>Comando de Operações Policiais Militares - COPPM</h4>
+                </td>
+                <td style="width: 2.5cm; text-align: right;"><img src="/static/assets/pmba.png" class="logo"></td>
+            </tr>
+        </table>
+        <hr>
+    </div>
 
-<div id="page-footer">
-    <p class="footer-content">Página <pdf:pagenumber> de <pdf:pagecount></p>
-</div>
+    <div id="page-footer">
+        <p class="footer-content">Página <pdf:pagenumber> de <pdf:pagecount></p>
+    </div>
 
-<h1>CADERNO INFORMATIVO DE OCORRÊNCIAS</h1>
+    <div class="main-title">CADERNO INFORMATIVO DE OCORRÊNCIAS</div>
 
-{% for ocorrencia in ocorrencias %}
-    <div class="ocorrencia-block">
-        <h2 class="ocorrencia-title">
-            {{ ocorrencia.tipo_ocorrencia.nome|upper }} - Nº {{ ocorrencia.id }}
-        </h2>
-        <div class="info-row">
-            <div class="info-label">Data/Hora do Fato:</div>
-            <div class="info-value">{{ ocorrencia.data_fato|date:"d/m/Y H:i" }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Local:</div>
-            <div class="info-value">{{ ocorrencia.cidade }} / {{ ocorrencia.bairro }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">RISP / AISP / OPM:</div>
-            <div class="info-value">
-                {% if ocorrencia.risp_area %}{{ ocorrencia.risp_area.nome }}{% endif %} /
-                {% if ocorrencia.aisp_area %}{{ ocorrencia.aisp_area.nome }}{% endif %} /
-                {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% endif %}
+    {% for ocorrencia in ocorrencias %}
+        <div class="ocorrencia-block">
+            <div class="ocorrencia-title">
+                OCORRÊNCIA Nº {{ ocorrencia.id }} - {{ ocorrencia.tipo_ocorrencia.nome|upper }}
+            </div>
+            <table class="info-table">
+                <tr>
+                    <td class="label">Data/Hora do Fato:</td>
+                    <td>{{ ocorrencia.data_fato|date:"d/m/Y H:i" }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Local:</td>
+                    <td>{{ ocorrencia.cidade }} / {{ ocorrencia.bairro }}</td>
+                </tr>
+                <tr>
+                    <td class="label">RISP / AISP / OPM:</td>
+                    <td>
+                        {% if ocorrencia.risp_area %}{{ ocorrencia.risp_area.nome }}{% endif %} /
+                        {% if ocorrencia.aisp_area %}{{ ocorrencia.aisp_area.nome }}{% endif %} /
+                        {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% endif %}
+                    </td>
+                </tr>
+            </table>
+            
+            {% if ocorrencia.foto_ocorrencia and ocorrencia.foto_ocorrencia.url %}
+                <img src="{{ ocorrencia.foto_ocorrencia.url }}" class="ocorrencia-image">
+            {% endif %}
+            
+            <div class="description">
+                <p><strong>DESCRIÇÃO DO FATO:</strong></p>
+                <p>{{ ocorrencia.descricao_fato|linebreaksbr }}</p>
             </div>
         </div>
-
-        {% if ocorrencia.imagem.url %}
-            <img src="{{ ocorrencia.imagem.url }}" alt="Imagem da Ocorrência" class="ocorrencia-image">
-        {% endif %}
-
-        <h3 class="description-title">DESCRIÇÃO DO FATO:</h3>
-        <p class="description-text">{{ ocorrencia.descricao_fato|linebreaksbr }}</p>
-    </div>
-{% endfor %}
+    {% endfor %}
 </body>
 </html>
