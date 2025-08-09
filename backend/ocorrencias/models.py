@@ -56,7 +56,8 @@ class Ocorrencia(models.Model):
     opm_area = models.ForeignKey('OPM', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="OPM da Área")
     aisp_area = models.ForeignKey('AISP', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="AISP da Área")
     risp_area = models.ForeignKey('RISP', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="RISP da Área")
-    foto_ocorrencia = models.URLField(max_length=1024, blank=True, null=True, verbose_name="Foto da Ocorrência")    
+    # ALTERADO: De ImageField para URLField
+    foto_ocorrencia = models.URLField(max_length=1024, blank=True, null=True, verbose_name="Foto da Ocorrência")
     data_fato = models.DateTimeField()
     descricao_fato = models.TextField()
     fonte_informacao = models.CharField(max_length=200, blank=True)
