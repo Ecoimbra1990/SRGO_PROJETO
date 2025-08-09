@@ -9,6 +9,7 @@ from .views import (
     ModeloArmaViewSet,
     LocalidadeViewSet,
     GerarCadernoPDFView,
+    GerarCadernoPorFiltroPDFView, # Adicionado
     DashboardAnalyticsView,
     ModalidadeCrimeViewSet
 )
@@ -26,5 +27,7 @@ router.register(r'modalidades-crime', ModalidadeCrimeViewSet, basename='modalida
 urlpatterns = [
     path('', include(router.urls)),
     path('gerar-caderno-pdf/', GerarCadernoPDFView.as_view(), name='gerar_caderno_pdf'),
+    # Nova rota para geração por filtro
+    path('gerar-caderno-por-filtro/', GerarCadernoPorFiltroPDFView.as_view(), name='gerar_caderno_por_filtro'),
     path('dashboard-analytics/', DashboardAnalyticsView.as_view(), name='dashboard_analytics'),
 ]
