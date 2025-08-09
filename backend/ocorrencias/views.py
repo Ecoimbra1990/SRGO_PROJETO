@@ -35,30 +35,30 @@ class GerarCadernoPDFView(APIView):
         template = get_template('caderno_template.html')
         html = template.render(context)
         
-        base_url = request.build_absolute_uri('/')
-        
-        # Carrega o CSS
-        css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'caderno_style.css')
-        css = CSS(filename=css_path)
+        # Carrega o CSS diretamente do sistema de arquivos
+        css_path = os.path.join(settings.STATIC_ROOT, 'css', 'caderno_style.css')
+        if not os.path.exists(css_path):
+             # Fallback para desenvolvimento local onde collectstatic pode não ter sido executado
+             css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'caderno_style.css')
 
-        pdf_file = HTML(string=html, base_url=base_url).write_pdf(stylesheets=[css])
+        css = CSS(filename=css_path)
+        
+        # Passa o BASE_DIR para o WeasyPrint saber onde encontrar os arquivos locais
+        pdf_file = HTML(string=html, base_url=str(settings.BASE_DIR)).write_pdf(stylesheets=[css])
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo.pdf"'
         return response
 
-# --- NOVA VIEW PARA GERAR PDF (BASEADO EM FILTROS) ---
+# --- VIEW PARA GERAR PDF (BASEADO EM FILTROS) ---
 class GerarCadernoPorFiltroPDFView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # Os filtros são passados no corpo da requisição
         filtros = request.data.get('filtros', {})
         
-        # Constrói um queryset inicial
         queryset = Ocorrencia.objects.all()
 
-        # Aplica os filtros manualmente
         if filtros.get('id'):
             queryset = queryset.filter(id=filtros['id'])
         if filtros.get('opm_area'):
@@ -80,12 +80,14 @@ class GerarCadernoPorFiltroPDFView(APIView):
         context = { 'ocorrencias': ocorrencias_filtradas }
         template = get_template('caderno_template.html')
         html = template.render(context)
-        base_url = request.build_absolute_uri('/')
 
-        css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'caderno_style.css')
+        css_path = os.path.join(settings.STATIC_ROOT, 'css', 'caderno_style.css')
+        if not os.path.exists(css_path):
+             css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'caderno_style.css')
+        
         css = CSS(filename=css_path)
         
-        pdf_file = HTML(string=html, base_url=base_url).write_pdf(stylesheets=[css])
+        pdf_file = HTML(string=html, base_url=str(settings.BASE_DIR)).write_pdf(stylesheets=[css])
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="caderno_informativo_filtrado.pdf"'
