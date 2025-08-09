@@ -14,7 +14,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
             setLoading(true);
             try {
                 const response = await getOcorrencias(filters);
-                setOcorrencias(response.data);
+                setOcorrencias(response.data.results || response.data); // Compatível com e sem paginação
                 setError('');
             } catch (err) {
                 console.error("Erro ao buscar ocorrências:", err);
@@ -28,10 +28,7 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
-        setFilters(prevFilters => ({
-            ...prevFilters,
-            [name]: value
-        }));
+        setFilters(prevFilters => ({ ...prevFilters, [name]: value }));
     };
 
     const clearFilters = () => {
@@ -39,18 +36,13 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
     };
 
     const handleSelectRow = (id) => {
-        setSelectedOcorrencias(prevSelected => 
-            prevSelected.includes(id) 
-                ? prevSelected.filter(item => item !== id) 
-                : [...prevSelected, id]
+        setSelectedOcorrencias(prev => 
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
         );
     };
-    
+
     const handleGerarPDF = async () => {
-        if (selectedOcorrencias.length === 0) {
-            alert("Por favor, selecione pelo menos uma ocorrência para gerar o caderno.");
-            return;
-        }
+        if (selectedOcorrencias.length === 0) return;
         try {
             const response = await gerarCadernoPDF(selectedOcorrencias);
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -61,7 +53,6 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
             link.click();
             link.parentNode.removeChild(link);
         } catch (err) {
-            console.error("Erro ao gerar PDF:", err);
             setError("Não foi possível gerar o PDF.");
         }
     };
@@ -72,12 +63,11 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'caderno_informativo_filtrado.pdf');
+            link.setAttribute('download', 'caderno_filtrado.pdf');
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
         } catch (err) {
-            console.error("Erro ao gerar PDF por filtro:", err);
             setError("Não foi possível gerar o PDF com os filtros atuais.");
         }
     };
@@ -96,70 +86,48 @@ const OcorrenciaList = ({ onSelectOcorrencia, onEditOcorrencia, refresh, opms, t
                     {tiposOcorrencia.map(tipo => <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>)}
                 </select>
                 <input type="text" name="bairro" value={filters.bairro} onChange={handleFilterChange} placeholder="Bairro" />
-                <input type="number" name="ano" value={filters.ano} onChange={handleFilterChange} placeholder="Ano (ex: 2025)" />
-                <input type="number" name="mes" value={filters.mes} onChange={handleFilterChange} placeholder="Mês (1-12)" min="1" max="12" />
-                <button onClick={clearFilters} className="clear-button">Limpar Filtros</button>
-                <button onClick={handleGerarPDF} className="pdf-button" disabled={selectedOcorrencias.length === 0}>
-                    Gerar Caderno ({selectedOcorrencias.length})
-                </button>
-                <button onClick={handleGerarPDFPorFiltro} className="pdf-button">
-                    Gerar por Filtro
-                </button>
+                <input type="number" name="ano" value={filters.ano} onChange={handleFilterChange} placeholder="Ano" />
+                <input type="number" name="mes" value={filters.mes} onChange={handleFilterChange} placeholder="Mês" />
+                <button onClick={clearFilters}>Limpar</button>
+                <button onClick={handleGerarPDF} disabled={selectedOcorrencias.length === 0}>Gerar Caderno</button>
+                <button onClick={handleGerarPDFPorFiltro}>Gerar por Filtro</button>
             </div>
-
-            {loading ? <p>Carregando ocorrências...</p> : 
-             error ? <p style={{ color: 'red' }}>{error}</p> :
-            <table className="ocorrencia-table">
-                <thead>
-                    <tr>
-                        <th>Sel.</th>
-                        <th>Nº</th>
-                        <th>Tipo</th>
-                        <th>Data do Fato</th>
-                        <th>Bairro</th>
-                        <th>OPM da Área</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {ocorrencias.length > 0 ? ocorrencias.map(ocorrencia => (
-                        <tr 
-                            key={ocorrencia.id} 
-                            onClick={() => onSelectOcorrencia(ocorrencia.id)}
-                            className={selectedOcorrencias.includes(ocorrencia.id) ? 'selected-row' : ''}
-                        >
-                            <td onClick={(e) => e.stopPropagation()}>
-                                <input 
-                                    type="checkbox"
-                                    checked={selectedOcorrencias.includes(ocorrencia.id)}
-                                    onChange={() => handleSelectRow(ocorrencia.id)}
-                                />
-                            </td>
-                            <td>{ocorrencia.id}</td>
-                            <td>{ocorrencia.tipo_ocorrencia_nome}</td>
-                            <td>{new Date(ocorrencia.data_fato).toLocaleDateString('pt-BR')}</td>
-                            <td>{ocorrencia.bairro || 'N/A'}</td>
-                            <td>{ocorrencia.opm_area_nome || 'N/A'}</td>
-                            <td>
-                                <button 
-                                    className="edit-button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onEditOcorrencia(ocorrencia);
-                                    }}
-                                >
-                                    Editar
-                                </button>
-                            </td>
-                        </tr>
-                    )) : (
+            {loading && <p>Carregando ocorrências...</p>}
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {!loading && !error && (
+                <table className="ocorrencia-table">
+                    <thead>
                         <tr>
-                            <td colSpan="7">Nenhum registro encontrado.</td>
+                            <th>Sel.</th>
+                            <th>Nº</th>
+                            <th>Tipo</th>
+                            <th>Data do Fato</th>
+                            <th>Bairro</th>
+                            <th>OPM da Área</th>
+                            <th>Ações</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
-            }
+                    </thead>
+                    <tbody>
+                        {ocorrencias.length > 0 ? ocorrencias.map(ocorrencia => (
+                            <tr key={ocorrencia.id} onClick={() => onSelectOcorrencia(ocorrencia.id)}>
+                                <td onClick={(e) => e.stopPropagation()}>
+                                    <input type="checkbox" checked={selectedOcorrencias.includes(ocorrencia.id)} onChange={() => handleSelectRow(ocorrencia.id)} />
+                                </td>
+                                <td>{ocorrencia.id}</td>
+                                <td>{ocorrencia.tipo_ocorrencia_nome}</td>
+                                <td>{new Date(ocorrencia.data_fato).toLocaleDateString('pt-BR')}</td>
+                                <td>{ocorrencia.bairro || 'N/A'}</td>
+                                <td>{ocorrencia.opm_area_nome || 'N/A'}</td>
+                                <td>
+                                    <button onClick={(e) => { e.stopPropagation(); onEditOcorrencia(ocorrencia); }}>Editar</button>
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan="7">Nenhum registro encontrado.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            )}
         </div>
     );
 };
