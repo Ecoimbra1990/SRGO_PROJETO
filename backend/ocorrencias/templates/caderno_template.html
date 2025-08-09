@@ -2,15 +2,15 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    </head>
+</head>
 <body>
     <div id="page-header">
-        <img src="/static/assets/coppm.png" class="logo">
+        <img src="static/assets/coppm.png" class="logo">
         <div class="header-title">
             <h2>POLÍCIA MILITAR DA BAHIA</h2>
             <h3>Comando de Operações Policiais Militares</h3>
         </div>
-        <img src="/static/assets/pmba.png" class="logo">
+        <img src="static/assets/pmba.png" class="logo">
     </div>
 
     <div id="page-footer">
@@ -32,8 +32,8 @@
                 {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% else %}N/A{% endif %}
             </p>
             
-            {% if ocorrencia.foto_ocorrencia and ocorrencia.foto_ocorrencia.url %}
-                <img src="{{ ocorrencia.foto_ocorrencia.url }}" class="ocorrencia-image">
+            {% if ocorrencia.foto_ocorrencia and ocorrencia.foto_ocorrencia.path %}
+                <img src="{{ ocorrencia.foto_ocorrencia.path }}" class="ocorrencia-image">
             {% endif %}
             
             <div class="description">
