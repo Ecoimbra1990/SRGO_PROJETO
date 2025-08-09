@@ -22,13 +22,13 @@ services:
         generateValue: true
       - fromGroup: google-credentials # Assumindo que você criou um grupo de variáveis de ambiente
 
-  # Serviço do Frontend (React - Servido como site estático)
-  - type: web
+  # Serviço do Frontend (React)
+  - type: static_site
     name: srgo-frontend
     plan: free
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    publishDir: "build"
+    publishDir: build # A propriedade correta é 'publishDir' e o valor é o nome da pasta
     routes:
       - type: rewrite
         source: /*
