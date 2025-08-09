@@ -23,7 +23,7 @@ services:
       - fromGroup: google-credentials # Assumindo que você criou um grupo de variáveis de ambiente
 
   # Serviço do Frontend (React)
-  - type: static_site
+  - type: web
     name: srgo-frontend
     plan: free
     rootDir: frontend
