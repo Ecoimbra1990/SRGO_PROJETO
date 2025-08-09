@@ -32,8 +32,8 @@
                 {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% else %}N/A{% endif %}
             </p>
             
-            {% if ocorrencia.foto_ocorrencia and ocorrencia.foto_ocorrencia.path %}
-                <img src="file://{{ ocorrencia.foto_ocorrencia.path }}" class="ocorrencia-image">
+            {% if ocorrencia.foto_ocorrencia %}
+                <img src="{{ ocorrencia.foto_ocorrencia }}" class="ocorrencia-image">
             {% endif %}
             
             <div class="description">
