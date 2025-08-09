@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @frame header {
+                -pdf-frame-content: page-header;
+                top: 1cm;
+                left: 1.5cm;
+                right: 1.5cm;
+                height: 3.5cm;
+            }
+            @frame footer {
+                -pdf-frame-content: page-footer;
+                bottom: 1cm;
+                left: 1.5cm;
+                right: 1.5cm;
+                height: 1cm;
+            }
+        }
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10pt;
+        }
+        .header-table {
+            width: 100%;
+            border: 0;
+        }
+        .header-table td {
+            vertical-align: middle;
+        }
+        .logo {
+            width: 2.5cm;
+        }
+        .header-title {
+            text-align: center;
+        }
+        .header-title h1, .header-title h2, .header-title h3 {
+            margin: 2px 0;
+        }
+        .footer-content {
+            text-align: right;
+            font-size: 9pt;
+        }
+        .main-title {
+            font-size: 16pt;
+            text-align: center;
+            margin-bottom: 1.5cm;
+        }
+        .ocorrencia-block {
+            margin-bottom: 1.5cm;
+            page-break-inside: avoid;
+        }
+        .ocorrencia-title {
+            font-size: 11pt;
+            font-weight: bold;
+            background-color: #f2f2f2;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .info-table {
+            width: 100%;
+            margin-top: 0.5cm;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 4px;
+            border: 1px solid #ddd;
+        }
+        .info-table .label {
+            font-weight: bold;
+            width: 3.5cm;
+        }
+        .description {
+            margin-top: 0.5cm;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+    <div id="page-header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 2.5cm;"><img src="{{ coppm_logo_path }}" class="logo"></td>
+                <td class="header-title">
+                    <h2>GOVERNO DO ESTADO DA BAHIA</h2>
+                    <h3>POLÍCIA MILITAR DA BAHIA</h3>
+                    <h4>Comando de Operações Policiais Militares - COPPM</h4>
+                </td>
+                <td style="width: 2.5cm; text-align: right;"><img src="{{ pmba_logo_path }}" class="logo"></td>
+            </tr>
+        </table>
+        <hr>
+    </div>
+
+    <div id="page-footer">
+        <p class="footer-content">Página <pdf:pagenumber> de <pdf:pagecount></p>
+    </div>
+
+    <div class="main-title">CADERNO INFORMATIVO DE OCORRÊNCIAS</div>
+
+    {% for ocorrencia in ocorrencias %}
+        <div class="ocorrencia-block">
+            <div class="ocorrencia-title">
+                OCORRÊNCIA Nº {{ ocorrencia.id }} - {{ ocorrencia.tipo_ocorrencia.nome|upper }}
+            </div>
+            <table class="info-table">
+                <tr>
+                    <td class="label">Data/Hora do Fato:</td>
+                    <td>{{ ocorrencia.data_fato|date:"d/m/Y H:i" }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Local:</td>
+                    <td>{{ ocorrencia.cidade }} / {{ ocorrencia.bairro }}</td>
+                </tr>
+                <tr>
+                    <td class="label">RISP / AISP / OPM:</td>
+                    <td>
+                        {% if ocorrencia.risp_area %}{{ ocorrencia.risp_area.nome }}{% endif %} /
+                        {% if ocorrencia.aisp_area %}{{ ocorrencia.aisp_area.nome }}{% endif %} /
+                        {% if ocorrencia.opm_area %}{{ ocorrencia.opm_area.nome }}{% endif %}
+                    </td>
+                </tr>
+            </table>
+            <div class="description">
+                <p><strong>DESCRIÇÃO DO FATO:</strong></p>
+                <p>{{ ocorrencia.descricao_fato|linebreaksbr }}</p>
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>
