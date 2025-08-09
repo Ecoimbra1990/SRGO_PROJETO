@@ -23,7 +23,7 @@ services:
       - fromGroup: google-credentials # Assumindo que você criou um grupo de variáveis de ambiente
 
   # Serviço do Frontend (React - Servido como site estático)
-  - type: static
+  - type: web
     name: srgo-frontend
     plan: free
     rootDir: frontend
@@ -35,6 +35,6 @@ services:
         destination: /index.html
 
 databases:
-  - name: srgo-database
-    databaseName: srgo_db # O nome interno do seu banco de dados
+  - name: srgo
+    databaseName: srgo_4s2g # O nome interno do seu banco de dados
     plan: free
